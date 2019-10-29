@@ -16,7 +16,14 @@ SymbolTable::SymbolTable() {
  */
 SymbolTable::~SymbolTable() {
     if (list != NULL) {
-        //TODO remove instances in the vector
+        // remove instances in the vector
+        int size = list->size();
+
+        for (int i = 0; i < size; i++) {
+            VarInfo *info = list->at(i);
+            delete info;
+        }
+
         delete list;
     }
 }
@@ -45,36 +52,36 @@ int SymbolTable::getSizeOfList() {
 
 Program *getExampleTree1(SymbolTable *table) {
     Program *p = new Program;
+    p->ps = new vector<Procedure *>;
 
     Procedure *proc = new Procedure;
-
     string *procName = new string("printst");
-    
     vector <Var*>* procParams = new vector<Var*>;
-
-
     Var *procParam = new Var;
-    procParam->id = new Id;
-    procParam->id->i = new string( "str" );
-    VarInfo *info1 = new VarInfo;
-    info1->name = procParam->id->i;
-    info1->declaredLine = 15;
-    table->addVarInfo(info1);
 
+    procParam->id = new Id;
+    procParam->id->i = new string("str");
     procParams->push_back(procParam);
 
+    proc->name = procName;
+    proc->params = procParams;
+    proc->startLine = 5;
+    proc->endLine = 17;
 
     Compound *procCompound = new Compound;
+    proc->cs = procCompound;
+
     vector <Statement *> *procStatements = new vector<Statement *>;
+    procCompound->stmts = procStatements;
 
     Statement *procStatement = new Statement;
-
     procStatement->p = new Print;
     procStatement->p->s = new string("str");
 
-    proc->cs = new Compound;
-    proc->cs->stmts =  new vector<Statement *>;
-    proc->cs->stmts->push_back(procStatement);
+    procStatements->push_back(procStatement);
+
+    p->ps->insert(p->ps->begin(), proc);
+
 
     // main function
     Compound *mainCompound = new Compound;
@@ -241,6 +248,10 @@ Program *getExampleTree1(SymbolTable *table) {
     whileS->w->s1->stmts->push_back(assign);
 
     mainCompound->stmts->push_back(whileS);
+    mainCompound->startLine = 19;
+    mainCompound->endLine = 45;
+
+    p->cs = mainCompound;
 
     return p;
 }

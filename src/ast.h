@@ -46,7 +46,7 @@ struct Id
 struct Program
 {
     string *name;
-    Procedure *ps;
+    vector<Procedure *> *ps;
     Compound *cs;
 };
 
@@ -184,6 +184,9 @@ struct Procedure
     string *name;
     vector<Var *> *params;
     Compound *cs;
+    int startLine;
+    int endLine;
 };
 
 Program *getExampleTree1(SymbolTable *table);
+bool checkScopeOfAllProcedures(SymbolTable *table, vector<Procedure *> *procs);
