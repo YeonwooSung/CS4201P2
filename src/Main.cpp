@@ -1,7 +1,5 @@
 #include "ast.h"
-
 #include <iostream>
-#include <cstdlib>
 
 
 int main() {

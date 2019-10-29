@@ -23,10 +23,13 @@ union Value {
 struct VarInfo {
     string *name;
     Value *val;
-    string *type;
+    char type; // 'b' for bool, 'i' for int, and 's' for string
     int declaredLine;
 };
 
+/**
+ * Class for the SymbolTable
+ */
 class SymbolTable {
     vector<VarInfo *> *list;
 public:
@@ -34,12 +37,12 @@ public:
     ~SymbolTable();
 
     void addVarInfo(VarInfo *v);
-    vector<VarInfo *> getList();
+    vector<VarInfo *> *getList();
     int getSizeOfList();
 };
 
-struct Id
-{
+
+struct Id {
     string *i;
 };
 
@@ -50,49 +53,41 @@ struct Program
     Compound *cs;
 };
 
-struct Assign
-{
+struct Assign {
     Id *i;
     Expr *e;
 };
 
-union Var
-{
+union Var {
     Id *id;
     Assign *a;
 };
 
-struct Print
-{
+struct Print {
     string *s;
 };
 
-struct Get
-{
+struct Get {
     Id *id;
 };
 
-struct If1
-{
+struct If1 {
     Expr *e;
     Compound *s;
 };
 
-struct If2
-{
+struct If2 {
     Expr *e;
     Compound *s1;
     Compound *s2;
 };
 
-union If
-{
+union If {
     If1 *i1;
     If2 *i2;
 };
 
-struct While
-{
+struct While {
     Expr *e;
     Compound *s1;
 };
@@ -103,20 +98,24 @@ struct Call
     vector<Expr *> *params;
 };
 
-union Statement
-{
+union Statement {
     Var *v;
     Print *p;
     Get *g;
     While *w;
     If *i;
-    Assign *a; 
+    Assign *a;
     Call *c;
+};
+
+struct Stmt {
+    Statement *statement;
+    char type;
 };
 
 struct Compound 
 {
-    vector<Statement *> *stmts;
+    vector<Stmt *> *stmts;
     int startLine;
     int endLine;
 };

@@ -28,17 +28,18 @@ SymbolTable::~SymbolTable() {
     }
 }
 
+vector<VarInfo *> *SymbolTable::getList() {
+    return list;
+}
+
 /**
  * Adds the VarInfo instace to the vector.
  * @param {v} new instance
  */
 void SymbolTable::addVarInfo(VarInfo *v) {
-    if (list != NULL) {
-        list->insert(list->begin(), v);
-    } else {
-        list = new vector<VarInfo *>;
-        list->insert(list->begin(), v);
-    }
+    if (list == NULL) list = new vector<VarInfo *>;
+
+    list->push_back(v);
 }
 
 /**
@@ -71,21 +72,25 @@ Program *getExampleTree1(SymbolTable *table) {
     Compound *procCompound = new Compound;
     proc->cs = procCompound;
 
-    vector <Statement *> *procStatements = new vector<Statement *>;
+    vector<Stmt *> *procStatements = new vector<Stmt *>;
     procCompound->stmts = procStatements;
 
     Statement *procStatement = new Statement;
     procStatement->p = new Print;
     procStatement->p->s = new string("str");
 
-    procStatements->push_back(procStatement);
+    Stmt *procStmt = new Stmt;
+    procStmt->statement = procStatement;
+    procStmt->type = 'p';
 
-    p->ps->insert(p->ps->begin(), proc);
+    procStatements->push_back(procStmt);
+
+    p->ps->push_back(proc);
 
 
     // main function
     Compound *mainCompound = new Compound;
-    mainCompound->stmts = new vector<Statement *>;
+    mainCompound->stmts = new vector<Stmt *>;
 
     // variable declarations
     Statement *varNS = new Statement;
@@ -93,27 +98,34 @@ Program *getExampleTree1(SymbolTable *table) {
     varN->id = new Id;
     varN->id->i = new string("n");
 
-    VarInfo *info2 = new VarInfo;
-    info2->name = varN->id->i;
-    info2->declaredLine = 22;
-    table->addVarInfo(info2);
+    Stmt *varNS_Stmt = new Stmt;
+    varNS_Stmt->statement = varNS;
+    varNS_Stmt->type = 'v';
+
+    VarInfo *info1 = new VarInfo;
+    info1->name = varN->id->i;
+    info1->declaredLine = 22;
+    table->addVarInfo(info1);
 
     varNS->v = varN;
-    mainCompound->stmts->push_back(varNS);
-
+    mainCompound->stmts->push_back(varNS_Stmt);
 
     Statement *varFirstS = new Statement;
     Var *varFirst = new Var;
     varFirst->id = new Id;
     varFirst->id->i = new string("first");
 
-    VarInfo *info3 = new VarInfo;
-    info3->name = varFirst->id->i;
-    info3->declaredLine = 24;
-    table->addVarInfo(info3);
+    Stmt *varFirstStmt = new Stmt;
+    varFirstStmt->statement = varFirstS;
+    varFirstStmt->type = 'v';
+
+    VarInfo *info2 = new VarInfo;
+    info2->name = varFirst->id->i;
+    info2->declaredLine = 24;
+    table->addVarInfo(info2);
 
     varFirstS->v = varFirst;
-    mainCompound->stmts->push_back(varFirstS);
+    mainCompound->stmts->push_back(varFirstStmt);
 
 
     Statement *varSecondS = new Statement;
@@ -121,13 +133,17 @@ Program *getExampleTree1(SymbolTable *table) {
     varSecond->id = new Id;
     varSecond->id->i = new string("second");
 
-    VarInfo *info4 = new VarInfo;
-    info4->name = varSecond->id->i;
-    info4->declaredLine = 25;
-    table->addVarInfo(info4);
+    Stmt *varSecondStmt = new Stmt;
+    varSecondStmt->type = 'v';
+    varSecondStmt->statement = varSecondS;
+
+    VarInfo *info3 = new VarInfo;
+    info3->name = varSecond->id->i;
+    info3->declaredLine = 25;
+    table->addVarInfo(info3);
 
     varSecondS->v = varSecond;
-    mainCompound->stmts->push_back(varSecondS);
+    mainCompound->stmts->push_back(varSecondStmt);
 
 
     Statement *varNextS = new Statement;
@@ -135,13 +151,17 @@ Program *getExampleTree1(SymbolTable *table) {
     varNext->id = new Id;
     varNext->id->i = new string("next");
 
-    VarInfo *info5 = new VarInfo;
-    info5->name = varNext->id->i;
-    info5->declaredLine = 26;
-    table->addVarInfo(info5);
+    Stmt *varNextStmt = new Stmt;
+    varNextStmt->statement = varNextS;
+    varNextStmt->type = 'v';
+
+    VarInfo *info4 = new VarInfo;
+    info4->name = varNext->id->i;
+    info4->declaredLine = 26;
+    table->addVarInfo(info4);
 
     varNextS->v = varNext;
-    mainCompound->stmts->push_back(varNextS);
+    mainCompound->stmts->push_back(varNextStmt);
 
 
     Statement *varCS = new Statement;
@@ -149,10 +169,14 @@ Program *getExampleTree1(SymbolTable *table) {
     varC->i = new Id;
     varC->i->i = new string("c");
 
-    VarInfo *info6 = new VarInfo;
-    info6->name = varC->i->i;
-    info6->declaredLine = 28;
-    table->addVarInfo(info6);
+    Stmt *varCStmt = new Stmt;
+    varCStmt->statement = varCS;
+    varCStmt->type = 'a';
+
+    VarInfo *info5 = new VarInfo;
+    info5->name = varC->i->i;
+    info5->declaredLine = 28;
+    table->addVarInfo(info5);
 
     varC->e = new Expr;
     varC->e->e1 = new Simple;
@@ -162,7 +186,7 @@ Program *getExampleTree1(SymbolTable *table) {
     varC->e->e1->e1->t->t1->f = new Factor;
     varC->e->e1->e1->t->t1->f->con = new string("0");
     varCS->a = varC;
-    mainCompound->stmts->push_back(varCS);
+    mainCompound->stmts->push_back(varCStmt);
 
 
     // print statement
@@ -170,8 +194,11 @@ Program *getExampleTree1(SymbolTable *table) {
     procCall->c = new Call;
     procCall->c->name = new Id;
     procCall->c->name->i = new string("printst");
-
     procCall->c->params = new vector<Expr *>;
+
+    Stmt *procCallStmt = new Stmt;
+    procCallStmt->statement = procCall;
+    procCallStmt->type = 'c';
 
     Expr *paramExpr = new Expr;
     paramExpr->e1 = new Simple;
@@ -182,7 +209,7 @@ Program *getExampleTree1(SymbolTable *table) {
     paramExpr->e1->e1->t->t1->f->con = new string("enter the number of terms");
 
     procCall->c->params->push_back(paramExpr);
-    mainCompound->stmts->push_back(procCall);
+    mainCompound->stmts->push_back(procCallStmt);
 
 
     // getstatement
@@ -190,13 +217,20 @@ Program *getExampleTree1(SymbolTable *table) {
     getS->g = new Get;
     getS->g->id = new Id;
     getS->g->id->i = new string("n");
-    mainCompound->stmts->push_back(getS);
+
+    Stmt *getStmt = new Stmt;
+    getStmt->statement = getS;
+    getStmt->type = 'g';
+
+    mainCompound->stmts->push_back(getStmt);
 
     // while statement
     Statement *whileS = new Statement;
     whileS->w = new While;
     whileS->w->e = new Expr;
     whileS->w->s1 = new Compound;
+    whileS->w->s1->startLine = 33;
+    whileS->w->s1->endLine = 48;
 
     // boolean
     whileS->w->e->e2 = new Expr2;
@@ -220,7 +254,7 @@ Program *getExampleTree1(SymbolTable *table) {
     whileS->w->e->e2->e2->e1->t->t1->f->id->i = new string("n");
 
     whileS->w->s1 = new Compound;
-    whileS->w->s1->stmts = new vector <Statement*>;
+    whileS->w->s1->stmts = new vector <Stmt*>;
 
     Statement *assign = new Statement;
     assign->a = new Assign;
@@ -245,11 +279,19 @@ Program *getExampleTree1(SymbolTable *table) {
     assign->a->e->e1->e2->t2->t1->f->id = new Id;
     assign->a->e->e1->e2->t2->t1->f->id->i = new string("first");
 
-    whileS->w->s1->stmts->push_back(assign);
+    Stmt *assignStmt = new Stmt;
+    assignStmt->statement = assign;
+    assignStmt->type = 'a';
 
-    mainCompound->stmts->push_back(whileS);
+    whileS->w->s1->stmts->push_back(assignStmt);
+
+    Stmt *whileStmt = new Stmt;
+    whileStmt->statement = whileS;
+    whileStmt->type = 'w';
+
+    mainCompound->stmts->push_back(whileStmt);
     mainCompound->startLine = 19;
-    mainCompound->endLine = 45;
+    mainCompound->endLine = 52;
 
     p->cs = mainCompound;
 
