@@ -165,6 +165,22 @@ bool checkScopeOfParamsForFunctionCall(SymbolTable *table, Call *call, vector<Va
     return result;
 }
 
+bool doSemanticAnalysisForIfStatement(SymbolTable *table, If *stmt, vector<Variable *> *params, int startLine, int endLine) {
+    bool checker = false;
+
+    if (stmt->type != '1') {
+        If2 *if2 = stmt->i->if2;
+        checker = checker && validateExpression(table, if2->e, startLine, (if2->s1->startLine + 1));
+        checker = checker && checkScopeOfStmts(table, if2->s1->stmts, NULL, startLine, if2->s1->endLine);
+        checker = checker && checkScopeOfStmts(table, if2->s2->stmts, NULL, startLine, if2->s2->endLine);
+    } else {
+        If1 *if1 = stmt->i->if1;
+        checker = checker && validateExpression(table, if1->e, startLine, (if1->s->startLine + 1));
+        checker = checker && checkScopeOfStmts(table, if1->s->stmts, NULL, startLine, if1->s->endLine);
+    }
+
+    return checker;
+}
 
 /**
  * Check the variable scopes of all statements for the semantic analysis.
@@ -184,7 +200,14 @@ bool checkScopeOfStmts(SymbolTable *table, vector<Stmt *> *stmts, vector<Variabl
 
             switch (stmt->type) {
                 case 'v':
-                    varName = stmt->statement->v->v->id->i;
+                    //TODO
+                    if (stmt->statement->v->type != 'i') {
+                        varName = stmt->statement->v->v->a->i->i;
+                        checker = checker && validateExpression(table, stmt->statement->v->v->a->e, startLine, endLine);
+                    } else {
+                        varName = stmt->statement->v->v->id->i;
+                    }
+
                     checker = checker && checkScopeOfVarName(table, varName, params, startLine, endLine);
                     break;
                 case 'p':
@@ -197,11 +220,21 @@ bool checkScopeOfStmts(SymbolTable *table, vector<Stmt *> *stmts, vector<Variabl
                     checker = checker && checkScopeOfStmts(table, stmt->statement->w->s1->stmts, params, startLine, stmt->statement->w->s1->endLine);
                     break;
                 case 'i':
-                    //TODO
+                    if (stmt->type != '1') {
+                        If2 *if2 = stmt->statement->i->i->if2;
+                        checker = checker && validateExpression(table, if2->e, startLine, (if2->s1->startLine + 1));
+                        checker = checker && checkScopeOfStmts(table, if2->s1->stmts, NULL, startLine, if2->s1->endLine);
+                        checker = checker && checkScopeOfStmts(table, if2->s2->stmts, NULL, startLine, if2->s2->endLine);
+                    } else {
+                        If1 *if1 = stmt->statement->i->i->if1;
+                        checker = checker && validateExpression(table, if1->e, startLine, (if1->s->startLine + 1));
+                        checker = checker && checkScopeOfStmts(table, if1->s->stmts, NULL, startLine, if1->s->endLine);
+                    }
                     break;
                 case 'a':
                     varName = stmt->statement->a->i->i;
                     checker = checker && checkScopeOfVarName(table, varName, params, startLine, endLine);
+                    checker = checker && validateExpression(table, stmt->statement->a->e, startLine, endLine);
                     break;
                 case 'c':
                     checker = checker && checkScopeOfParamsForFunctionCall(table, stmt->statement->c, params, startLine, endLine);

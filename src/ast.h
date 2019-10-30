@@ -91,7 +91,7 @@ union IfStmt {
 
 struct If {
     IfStmt *i;
-    char tyep;
+    char type; // '1' for If1, '2' for If2
 };
 
 struct While {

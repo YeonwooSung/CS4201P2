@@ -199,15 +199,26 @@ Program *getExampleTree1(SymbolTable *table) {
     mainCompound->stmts->push_back(varNextStmt);
 
 
-    //TODO assign -> if not Var statement -> need to check if the variable is declared
     Statement *varCS = new Statement;
     Assign *varC = new Assign;
     varC->i = new Id;
     varC->i->i = new string("c");
 
+    Variable *variableC = new Variable;
+    variableC->v = new Var;
+    variableC->type = 'a';
+    variableC->v->a = varC;
+
+    varCS->v = variableC;
+
+    VarInfo *infoA = new VarInfo;
+    infoA->declaredLine = 27;
+    infoA->name = varC->i->i;
+    table->addVarInfo(infoA);
+
     Stmt *varCStmt = new Stmt;
     varCStmt->statement = varCS;
-    varCStmt->type = 'a';
+    varCStmt->type = 'v';
 
     varC->e = new Expression;
     varC->e->expr = new Expr;
@@ -218,7 +229,7 @@ Program *getExampleTree1(SymbolTable *table) {
     varC->e->expr->e1->e1->t->t1 = new Term1;
     varC->e->expr->e1->e1->t->t1->f = new Factor;
     varC->e->expr->e1->e1->t->t1->f->con = new string("0");
-    varCS->a = varC;
+    //varCS->a = varC;
     mainCompound->stmts->push_back(varCStmt);
 
 
@@ -269,6 +280,7 @@ Program *getExampleTree1(SymbolTable *table) {
     whileS->w->s1 = new Compound;
     whileS->w->s1->startLine = 33;
     whileS->w->s1->endLine = 48;
+    whileS->w->s1->stmts = new vector<Stmt *>;
 
     // boolean
     whileS->w->e->expr->e2 = new Expr2;
@@ -289,9 +301,6 @@ Program *getExampleTree1(SymbolTable *table) {
     whileS->w->e->expr->e2->e2->e1->t->t1->f = new Factor;
     whileS->w->e->expr->e2->e2->e1->t->t1->f->id = new Id;
     whileS->w->e->expr->e2->e2->e1->t->t1->f->id->i = new string("n");
-
-    whileS->w->s1 = new Compound;
-    whileS->w->s1->stmts = new vector <Stmt*>;
 
     Statement *assign = new Statement;
     assign->a = new Assign;
