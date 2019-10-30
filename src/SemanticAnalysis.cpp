@@ -3,6 +3,8 @@
 #include <iostream>
 #include <cstdlib>
 
+bool validateExpression(SymbolTable *table, Expression *e, int startLine, int endLine);
+
 
 bool checkScopeOfVarName(SymbolTable *table, std::string *varName, vector<Variable *> *params, int startLine, int endLine) {
     bool checker = false;
@@ -40,8 +42,13 @@ bool checkScopeOfVarName(SymbolTable *table, std::string *varName, vector<Variab
             int res = name->compare(*varName);
 
             if (res == 0) {
-                checker = true;
-                break;
+                int declaredLine = info->declaredLine;
+
+                // check if the declared line is in the current scope
+                if (startLine <= declaredLine && endLine >= declaredLine) {
+                    checker = true;
+                    break;
+                }
             }
         }
     }
@@ -49,6 +56,113 @@ bool checkScopeOfVarName(SymbolTable *table, std::string *varName, vector<Variab
     if (!checker) std::cerr << "ScopeError::The scope of the variable " << *varName << " is invalid!" << std::endl;
 
     return checker;
+}
+
+bool validateFactor(SymbolTable *table, Factor *f, int startLine, int endLine) {
+    bool b = false;
+
+    if (f->con != NULL) {
+        b = true;
+    } else if (f->e != NULL) {
+        b = validateExpression(table, f->e, startLine, endLine);
+    } else if (f->id != NULL) {
+        b = checkScopeOfVarName(table, f->id->i, NULL, startLine, endLine);
+    } else if (f->note != NULL) {
+        b = validateExpression(table, f->note, startLine, endLine);
+    }
+
+    return b;
+}
+
+bool validateTerm(SymbolTable *table, Term *t, int startLine, int endLine) {
+    bool b = true;
+
+    if (t->t1 != NULL) {
+        Factor *factor = t->t1->f;
+        b = validateFactor(table, factor, startLine, endLine);
+    } else if (t->t2 != NULL) {
+        Factor *factor1 = t->t2->f1;
+        Factor *factor2 = t->t2->f2;
+        b = validateFactor(table, factor1, startLine, endLine);
+        b = b && validateFactor(table, factor2, startLine, endLine);
+    } else {
+        b = false;
+    }
+
+    return b;
+}
+
+bool validateSimple(SymbolTable *table, Simple *s, int startLine, int endLine) {
+    bool b = true;
+
+    if (s->e1 != NULL) {
+        Term *term = s->e1->t;
+        b = validateTerm(table, term, startLine, endLine);
+    } else if (s->e2 != NULL) {
+        Simple2 *s2 = s->e2;
+
+        Term *term1 = s2->t1;
+        Term *term2 = s2->t2;
+
+        b = validateTerm(table, term1, startLine, endLine);
+        b = b && validateTerm(table, term2, startLine, endLine);
+    } else {
+        b = false;
+    }
+
+    return b;
+}
+
+bool validateExpression(SymbolTable *table, Expression *e, int startLine, int endLine) {
+    char type = e->type;
+    bool b = true;
+
+    if (type != 'e') {
+        Simple *s = e->expr->e1;
+        b = validateSimple(table, s, startLine, endLine);
+    } else {
+        Expr2 *expr = e->expr->e2;
+        b = validateSimple(table, expr->e1, startLine, endLine);
+        b = b && validateSimple(table, expr->e2, startLine, endLine);
+    }
+
+    return b;
+}
+
+bool checkScopeOfParamsForFunctionCall(SymbolTable *table, Call *call, vector<Variable *> *parameters, int startLine, int endLine) {
+    if (parameters != NULL) {
+        // add parameters to symbol table
+        int numOfParams = parameters->size();
+
+        for (int i = 0; i < numOfParams; i++) {
+            VarInfo *info = new VarInfo;
+            info->declaredLine = startLine;
+            info->name = parameters->at(i)->v->id->i;
+
+            table->addVarInfo(info);
+        }
+    }
+
+    vector<Expression *> *params = call->params;
+    int size = params->size();
+    bool result = true;
+
+    for (int i = 0; i < size; i++) {
+        Expression *e = params->at(i);
+        result = result && validateExpression(table, e, startLine, endLine);
+    }
+
+    if (parameters != NULL) {
+        int numOfParams = parameters->size();
+
+        // remove parameters from symbol table
+        table->remove(numOfParams);
+
+        //TODO need to test function call!!
+        std::cout << "numOfParams = " << numOfParams << " , size = " << size << std::endl;
+    }
+
+    return result;
 }
 
 
@@ -80,7 +194,7 @@ bool checkScopeOfStmts(SymbolTable *table, vector<Stmt *> *stmts, vector<Variabl
                     checker = checker && checkScopeOfVarName(table, varName, params, startLine, endLine);
                     break;
                 case 'w':
-                    checker = checker && checkScopeOfStmts(table, stmt->statement->w->s1->stmts, params, stmt->statement->w->s1->startLine, stmt->statement->w->s1->endLine);
+                    checker = checker && checkScopeOfStmts(table, stmt->statement->w->s1->stmts, params, startLine, stmt->statement->w->s1->endLine);
                     break;
                 case 'i':
                     //TODO
@@ -90,7 +204,7 @@ bool checkScopeOfStmts(SymbolTable *table, vector<Stmt *> *stmts, vector<Variabl
                     checker = checker && checkScopeOfVarName(table, varName, params, startLine, endLine);
                     break;
                 case 'c':
-                    //TODO parameters -> check scope
+                    checker = checker && checkScopeOfParamsForFunctionCall(table, stmt->statement->c, params, startLine, endLine);
                     break;
                 default:
                     std::cerr << "Error::Invalid statement type!" << std::endl;

@@ -28,8 +28,25 @@ SymbolTable::~SymbolTable() {
     }
 }
 
+/**
+ * Getter for list.
+ * @return list
+ */
 vector<VarInfo *> *SymbolTable::getList() {
     return list;
+}
+
+void SymbolTable::remove(int i) {
+    int size = list->size();
+    int limit = i;
+
+    if (i > size) {
+        limit = size;
+    }
+
+    for (int a = 0; a < limit; a++) {
+        list->pop_back();
+    }
 }
 
 /**
@@ -192,13 +209,15 @@ Program *getExampleTree1(SymbolTable *table) {
     varCStmt->statement = varCS;
     varCStmt->type = 'a';
 
-    varC->e = new Expr;
-    varC->e->e1 = new Simple;
-    varC->e->e1->e1 = new Simple1;
-    varC->e->e1->e1->t = new Term;
-    varC->e->e1->e1->t->t1 = new Term1;
-    varC->e->e1->e1->t->t1->f = new Factor;
-    varC->e->e1->e1->t->t1->f->con = new string("0");
+    varC->e = new Expression;
+    varC->e->expr = new Expr;
+    varC->e->type = 's';
+    varC->e->expr->e1 = new Simple;
+    varC->e->expr->e1->e1 = new Simple1;
+    varC->e->expr->e1->e1->t = new Term;
+    varC->e->expr->e1->e1->t->t1 = new Term1;
+    varC->e->expr->e1->e1->t->t1->f = new Factor;
+    varC->e->expr->e1->e1->t->t1->f->con = new string("0");
     varCS->a = varC;
     mainCompound->stmts->push_back(varCStmt);
 
@@ -208,13 +227,16 @@ Program *getExampleTree1(SymbolTable *table) {
     procCall->c = new Call;
     procCall->c->name = new Id;
     procCall->c->name->i = new string("printst");
-    procCall->c->params = new vector<Expr *>;
+    procCall->c->params = new vector<Expression *>;
 
     Stmt *procCallStmt = new Stmt;
     procCallStmt->statement = procCall;
     procCallStmt->type = 'c';
 
+    Expression *paramExpression = new Expression;
     Expr *paramExpr = new Expr;
+    paramExpression->expr = paramExpr;
+    paramExpression->type = 's';
     paramExpr->e1 = new Simple;
     paramExpr->e1->e1 = new Simple1;
     paramExpr->e1->e1->t = new Term;
@@ -222,7 +244,7 @@ Program *getExampleTree1(SymbolTable *table) {
     paramExpr->e1->e1->t->t1->f = new Factor;
     paramExpr->e1->e1->t->t1->f->con = new string("enter the number of terms");
 
-    procCall->c->params->push_back(paramExpr);
+    procCall->c->params->push_back(paramExpression);
     mainCompound->stmts->push_back(procCallStmt);
 
 
@@ -241,31 +263,32 @@ Program *getExampleTree1(SymbolTable *table) {
     // while statement
     Statement *whileS = new Statement;
     whileS->w = new While;
-    whileS->w->e = new Expr;
+    whileS->w->e = new Expression;
+    whileS->w->e->expr = new Expr;
+    whileS->w->e->type = 'e';
     whileS->w->s1 = new Compound;
     whileS->w->s1->startLine = 33;
     whileS->w->s1->endLine = 48;
 
     // boolean
-    whileS->w->e->e2 = new Expr2;
-    whileS->w->e->e2->e1 = new Simple;
-    whileS->w->e->e2->e2 = new Simple;
-    whileS->w->e->e2->op = new RelOp(LT);
+    whileS->w->e->expr->e2 = new Expr2;
+    whileS->w->e->expr->e2->e1 = new Simple;
+    whileS->w->e->expr->e2->e2 = new Simple;
+    whileS->w->e->expr->e2->op = new RelOp(LT);
 
-    whileS->w->e->e2->e1->e1 = new Simple1;
-    whileS->w->e->e2->e1->e1->t = new Term;
-    whileS->w->e->e2->e1->e1->t->t1 = new Term1;
-    whileS->w->e->e2->e1->e1->t->t1->f = new Factor;
-    whileS->w->e->e2->e1->e1->t->t1->f->id = new Id;
-    whileS->w->e->e2->e1->e1->t->t1->f->id->i = new string("first");
+    whileS->w->e->expr->e2->e1->e1 = new Simple1;
+    whileS->w->e->expr->e2->e1->e1->t = new Term;
+    whileS->w->e->expr->e2->e1->e1->t->t1 = new Term1;
+    whileS->w->e->expr->e2->e1->e1->t->t1->f = new Factor;
+    whileS->w->e->expr->e2->e1->e1->t->t1->f->id = new Id;
+    whileS->w->e->expr->e2->e1->e1->t->t1->f->id->i = new string("first");
 
-
-    whileS->w->e->e2->e2->e1 = new Simple1;
-    whileS->w->e->e2->e2->e1->t = new Term;
-    whileS->w->e->e2->e2->e1->t->t1 = new Term1;
-    whileS->w->e->e2->e2->e1->t->t1->f = new Factor;
-    whileS->w->e->e2->e2->e1->t->t1->f->id = new Id;
-    whileS->w->e->e2->e2->e1->t->t1->f->id->i = new string("n");
+    whileS->w->e->expr->e2->e2->e1 = new Simple1;
+    whileS->w->e->expr->e2->e2->e1->t = new Term;
+    whileS->w->e->expr->e2->e2->e1->t->t1 = new Term1;
+    whileS->w->e->expr->e2->e2->e1->t->t1->f = new Factor;
+    whileS->w->e->expr->e2->e2->e1->t->t1->f->id = new Id;
+    whileS->w->e->expr->e2->e2->e1->t->t1->f->id->i = new string("n");
 
     whileS->w->s1 = new Compound;
     whileS->w->s1->stmts = new vector <Stmt*>;
@@ -276,22 +299,23 @@ Program *getExampleTree1(SymbolTable *table) {
     assign->a->i->i = new string("c");
 
 
-    assign->a->e = new Expr;
-    assign->a->e->e1 = new Simple;
-    assign->a->e->e1->e2 = new Simple2;
-    assign->a->e->e1->e2->op = new AddOp(Plus);
-    assign->a->e->e1->e2->t1 = new Term;
-    assign->a->e->e1->e2->t1->t1 = new Term1;
-    assign->a->e->e1->e2->t1->t1->f = new Factor;
-    assign->a->e->e1->e2->t1->t1->f->id = new Id;
-    assign->a->e->e1->e2->t1->t1->f->id->i = new string("first");
+    assign->a->e = new Expression;
+    assign->a->e->expr = new Expr;
+    assign->a->e->type = 's';
+    assign->a->e->expr->e1 = new Simple;
+    assign->a->e->expr->e1->e2 = new Simple2;
+    assign->a->e->expr->e1->e2->op = new AddOp(Plus);
+    assign->a->e->expr->e1->e2->t1 = new Term;
+    assign->a->e->expr->e1->e2->t1->t1 = new Term1;
+    assign->a->e->expr->e1->e2->t1->t1->f = new Factor;
+    assign->a->e->expr->e1->e2->t1->t1->f->id = new Id;
+    assign->a->e->expr->e1->e2->t1->t1->f->id->i = new string("first");
 
-
-    assign->a->e->e1->e2->t2 = new Term;
-    assign->a->e->e1->e2->t2->t1 = new Term1;
-    assign->a->e->e1->e2->t2->t1->f = new Factor;
-    assign->a->e->e1->e2->t2->t1->f->id = new Id;
-    assign->a->e->e1->e2->t2->t1->f->id->i = new string("first");
+    assign->a->e->expr->e1->e2->t2 = new Term;
+    assign->a->e->expr->e1->e2->t2->t1 = new Term1;
+    assign->a->e->expr->e1->e2->t2->t1->f = new Factor;
+    assign->a->e->expr->e1->e2->t2->t1->f->id = new Id;
+    assign->a->e->expr->e1->e2->t2->t1->f->id->i = new string("first");
 
     Stmt *assignStmt = new Stmt;
     assignStmt->statement = assign;

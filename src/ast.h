@@ -8,23 +8,24 @@ enum AddOp{Plus, Minus, Or};
 enum RelOp{Eq, NEq, LT, GT, LTE, GTE};
 
 struct Compound;
-union Factor;
-union Simple;
+struct Factor;
+struct Simple;
 struct Procedure;
 union Var;
 union Expr;
+struct Expression;
 
-union Value {
-    bool b;
-    int i;
-    string *s;
-};
 
 struct VarInfo {
     string *name;
-    Value *val;
+    string *val;
     char type; // 'b' for bool, 'i' for int, and 's' for string
     int declaredLine;
+
+    VarInfo() {
+        name = NULL;
+        val = NULL;
+    }
 };
 
 /**
@@ -37,6 +38,7 @@ public:
     ~SymbolTable();
 
     void addVarInfo(VarInfo *v);
+    void remove(int i);
     vector<VarInfo *> *getList();
     int getSizeOfList();
 };
@@ -55,7 +57,7 @@ struct Program
 
 struct Assign {
     Id *i;
-    Expr *e;
+    Expression *e;
 };
 
 union Var {
@@ -72,35 +74,39 @@ struct Get {
 };
 
 struct If1 {
-    Expr *e;
+    Expression *e;
     Compound *s;
 };
 
 struct If2 {
-    Expr *e;
+    Expression *e;
     Compound *s1;
     Compound *s2;
 };
 
-union If {
-    If1 *i1;
-    If2 *i2;
+union IfStmt {
+    If1 *if1;
+    If2 *if2;
+};
+
+struct If {
+    IfStmt *i;
+    char tyep;
 };
 
 struct While {
-    Expr *e;
+    Expression *e;
     Compound *s1;
 };
 
-struct Call
-{
+struct Call {
     Id *name;
-    vector<Expr *> *params;
+    vector<Expression *> *params;
 };
 
 struct Variable {
     Var *v;
-    char type;
+    char type; // 'i' for Id, 'a' for Assign
 };
 
 union Statement {
@@ -115,76 +121,86 @@ union Statement {
 
 struct Stmt {
     Statement *statement;
-    char type;
+    char type; // 'i' for If, 'a' for Assign, 'w' for While, 'p' for Print, 'g' for Get, 'v' for Var
 };
 
-struct Compound 
-{
+struct Compound {
     vector<Stmt *> *stmts;
     int startLine;
     int endLine;
 };
 
-struct Term1
-{
+struct Term1 {
     Factor *f;
 };
 
-struct Term2
-{
+struct Term2 {
     Factor *f1;
     MulOp *op;
     Factor *f2;
 };
 
-union Term
-{
+struct Term {
     Term1 *t1;
     Term2 *t2;
+
+    Term() {
+        t1 = NULL;
+        t2 = NULL;
+    }
 };
 
-struct Expr2
-{
+struct Expr2 {
     Simple *e1;
     RelOp *op;
     Simple *e2;
 };
 
-struct Simple1
-{
+struct Simple1 {
     Term *t;
 };
 
-struct Simple2
-{
+struct Simple2 {
     Term *t1;
     AddOp *op;
     Term *t2;
 };
 
-union Expr
-{
+struct Expression {
+    Expr *expr;
+    char type; // 's' for Simple, 'e' for Expr2
+};
+
+union Expr {
     Simple *e1;
     Expr2 *e2;
 };
 
-union Simple
-{
+struct Simple {
     Simple1 *e1;
     Simple2 *e2;
+
+    Simple() {
+        e1 = NULL;
+        e2 = NULL;
+    }
 };
 
-
-union Factor
-{
+struct Factor {
     Id *id;
     string *con;
-    Expr *e;
-    Expr *note;
+    Expression *e;
+    Expression *note;
+
+    Factor() {
+        id = NULL;
+        con = NULL;
+        e = NULL;
+        note = NULL;
+    }
 };
 
-struct Procedure
-{
+struct Procedure {
     string *name;
     vector<Variable *> *params;
     Compound *cs;
@@ -194,3 +210,4 @@ struct Procedure
 
 Program *getExampleTree1(SymbolTable *table);
 bool checkScopeOfAllProcedures(SymbolTable *table, vector<Procedure *> *procs);
+bool checkScopeOfStmts(SymbolTable *table, vector<Stmt *> *stmts, vector<Variable *> *params, int startLine, int endLine);
