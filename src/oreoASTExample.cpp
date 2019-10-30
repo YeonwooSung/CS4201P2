@@ -57,12 +57,15 @@ Program *getExampleTree1(SymbolTable *table) {
 
     Procedure *proc = new Procedure;
     string *procName = new string("printst");
-    vector <Var*>* procParams = new vector<Var*>;
-    Var *procParam = new Var;
 
+    vector <Variable*>* procParams = new vector<Variable*>;
+    Variable *procParameter = new Variable;
+    Var *procParam = new Var;
     procParam->id = new Id;
     procParam->id->i = new string("str");
-    procParams->push_back(procParam);
+    procParameter->type = 'i';
+    procParameter->v = procParam;
+    procParams->push_back(procParameter);
 
     proc->name = procName;
     proc->params = procParams;
@@ -94,6 +97,7 @@ Program *getExampleTree1(SymbolTable *table) {
 
     // variable declarations
     Statement *varNS = new Statement;
+    Variable *variableN = new Variable;
     Var *varN = new Var;
     varN->id = new Id;
     varN->id->i = new string("n");
@@ -107,13 +111,19 @@ Program *getExampleTree1(SymbolTable *table) {
     info1->declaredLine = 22;
     table->addVarInfo(info1);
 
-    varNS->v = varN;
+    variableN->v = varN;
+    variableN->type = 'i';
+    varNS->v = variableN;
     mainCompound->stmts->push_back(varNS_Stmt);
 
     Statement *varFirstS = new Statement;
     Var *varFirst = new Var;
     varFirst->id = new Id;
     varFirst->id->i = new string("first");
+    
+    Variable *variableFirst = new Variable;
+    variableFirst->v = varFirst;
+    variableFirst->type = 'i';
 
     Stmt *varFirstStmt = new Stmt;
     varFirstStmt->statement = varFirstS;
@@ -124,7 +134,7 @@ Program *getExampleTree1(SymbolTable *table) {
     info2->declaredLine = 24;
     table->addVarInfo(info2);
 
-    varFirstS->v = varFirst;
+    varFirstS->v = variableFirst;
     mainCompound->stmts->push_back(varFirstStmt);
 
 
@@ -132,6 +142,10 @@ Program *getExampleTree1(SymbolTable *table) {
     Var *varSecond = new Var;
     varSecond->id = new Id;
     varSecond->id->i = new string("second");
+
+    Variable *variableSecond = new Variable;
+    variableSecond->v = varSecond;
+    variableSecond->type = 'i';
 
     Stmt *varSecondStmt = new Stmt;
     varSecondStmt->type = 'v';
@@ -142,7 +156,7 @@ Program *getExampleTree1(SymbolTable *table) {
     info3->declaredLine = 25;
     table->addVarInfo(info3);
 
-    varSecondS->v = varSecond;
+    varSecondS->v = variableSecond;
     mainCompound->stmts->push_back(varSecondStmt);
 
 
@@ -160,10 +174,15 @@ Program *getExampleTree1(SymbolTable *table) {
     info4->declaredLine = 26;
     table->addVarInfo(info4);
 
-    varNextS->v = varNext;
+    Variable *variableNext = new Variable;
+    variableNext->v = varNext;
+    variableNext->type = 'i';
+
+    varNextS->v = variableNext;
     mainCompound->stmts->push_back(varNextStmt);
 
 
+    //TODO assign -> if not Var statement -> need to check if the variable is declared
     Statement *varCS = new Statement;
     Assign *varC = new Assign;
     varC->i = new Id;
@@ -172,11 +191,6 @@ Program *getExampleTree1(SymbolTable *table) {
     Stmt *varCStmt = new Stmt;
     varCStmt->statement = varCS;
     varCStmt->type = 'a';
-
-    VarInfo *info5 = new VarInfo;
-    info5->name = varC->i->i;
-    info5->declaredLine = 28;
-    table->addVarInfo(info5);
 
     varC->e = new Expr;
     varC->e->e1 = new Simple;

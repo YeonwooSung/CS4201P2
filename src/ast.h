@@ -98,8 +98,13 @@ struct Call
     vector<Expr *> *params;
 };
 
-union Statement {
+struct Variable {
     Var *v;
+    char type;
+};
+
+union Statement {
+    Variable *v;
     Print *p;
     Get *g;
     While *w;
@@ -181,7 +186,7 @@ union Factor
 struct Procedure
 {
     string *name;
-    vector<Var *> *params;
+    vector<Variable *> *params;
     Compound *cs;
     int startLine;
     int endLine;

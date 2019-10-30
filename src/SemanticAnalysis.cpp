@@ -4,7 +4,7 @@
 #include <cstdlib>
 
 
-bool checkScopeOfVarName(SymbolTable *table, std::string *varName, vector<Var *> *params, int startLine, int endLine) {
+bool checkScopeOfVarName(SymbolTable *table, std::string *varName, vector<Variable *> *params, int startLine, int endLine) {
     bool checker = false;
 
     // validate the parameters
@@ -18,7 +18,14 @@ bool checkScopeOfVarName(SymbolTable *table, std::string *varName, vector<Var *>
         int size = params->size();
 
         for (int i = 0; i < size; i++) {
-            //TODO
+            Variable *param = params->at(i);
+            string *paramName = param->v->id->i;
+            int res = paramName->compare(*varName);
+
+            if (res == 0) {
+                checker = true;
+                break;
+            }
         }
     }
 
@@ -28,9 +35,18 @@ bool checkScopeOfVarName(SymbolTable *table, std::string *varName, vector<Var *>
         int size = list->size();
 
         for (int i = 0; i < size; i++) {
-            //TODO
+            VarInfo *info = list->at(i);
+            string *name = info->name;
+            int res = name->compare(*varName);
+
+            if (res == 0) {
+                checker = true;
+                break;
+            }
         }
     }
+
+    if (!checker) std::cerr << "ScopeError::The scope of the variable " << *varName << " is invalid!" << std::endl;
 
     return checker;
 }
@@ -42,7 +58,7 @@ bool checkScopeOfVarName(SymbolTable *table, std::string *varName, vector<Var *>
  * @param {procs} Pointer that points the list of Procedure instances.
  * @return If all statements are sematically valid, returns true. Otherwise, returns false.
  */
-bool checkScopeOfStmts(SymbolTable *table, vector<Stmt *> *stmts, vector<Var *> *params, int startLine, int endLine) {
+bool checkScopeOfStmts(SymbolTable *table, vector<Stmt *> *stmts, vector<Variable *> *params, int startLine, int endLine) {
     bool checker = true;
     int size = stmts->size();
 
@@ -54,13 +70,13 @@ bool checkScopeOfStmts(SymbolTable *table, vector<Stmt *> *stmts, vector<Var *> 
 
             switch (stmt->type) {
                 case 'v':
-                    varName = stmt->statement->v->id->i;
+                    varName = stmt->statement->v->v->id->i;
                     checker = checker && checkScopeOfVarName(table, varName, params, startLine, endLine);
                     break;
                 case 'p':
                     break;
                 case 'g':
-                    //TODO Var -> Assign ? Id ?
+                    varName = stmt->statement->g->id->i;
                     checker = checker && checkScopeOfVarName(table, varName, params, startLine, endLine);
                     break;
                 case 'w':
@@ -98,7 +114,7 @@ bool checkScopeOfStmts(SymbolTable *table, vector<Stmt *> *stmts, vector<Var *> 
  * @return If the procedure is sematically valid, returns true. Otherwise, returns false.
  */
 bool checkScopeOfProcedure(SymbolTable *table, Procedure *proc) {
-    vector<Var *> *params = proc->params;
+    vector<Variable *> *params = proc->params;
     vector<Stmt *> *stmts = proc->cs->stmts;
     return checkScopeOfStmts(table, stmts, params, proc->startLine, proc->endLine);
 }
