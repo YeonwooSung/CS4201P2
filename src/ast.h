@@ -211,3 +211,4 @@ struct Procedure {
 Program *getExampleTree1(SymbolTable *table);
 bool checkScopeOfAllProcedures(SymbolTable *table, vector<Procedure *> *procs);
 bool checkScopeOfStmts(SymbolTable *table, vector<Stmt *> *stmts, vector<Variable *> *params, int startLine, int endLine);
+bool checkType(vector<Stmt *> *stmts);
