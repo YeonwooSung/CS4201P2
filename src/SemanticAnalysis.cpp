@@ -194,13 +194,15 @@ bool checkScopeOfStmts(SymbolTable *table, vector<Stmt *> *stmts, vector<Variabl
 
     // use try-catch statement to catch possible error
     try {
+        // use for loop to iterate the list of statements
         for (int i = 0; i < size; i++) {
             Stmt *stmt = stmts->at(i);
             std::string *varName = NULL;
 
+            // use switch statement to check the type of the current statement
             switch (stmt->type) {
                 case 'v':
-                    //TODO
+                    // check if this Var contains either Assign or Id
                     if (stmt->statement->v->type != 'i') {
                         varName = stmt->statement->v->v->a->i->i;
                         checker = checker && validateExpression(table, stmt->statement->v->v->a->e, startLine, endLine);
@@ -220,6 +222,7 @@ bool checkScopeOfStmts(SymbolTable *table, vector<Stmt *> *stmts, vector<Variabl
                     checker = checker && checkScopeOfStmts(table, stmt->statement->w->s1->stmts, params, startLine, stmt->statement->w->s1->endLine);
                     break;
                 case 'i':
+                    // check if this If union contains either If1 or If2
                     if (stmt->type != '1') {
                         If2 *if2 = stmt->statement->i->i->if2;
                         checker = checker && validateExpression(table, if2->e, startLine, (if2->s1->startLine + 1));
