@@ -19,12 +19,13 @@ struct Expression;
 struct VarInfo {
     string *name;
     string *val;
-    char type; // 'b' for bool, 'i' for int, and 's' for string
+    char type; // 'b' for bool, 'i' for int, and 's' for string, defulat 0 (not defined)
     int declaredLine;
 
     VarInfo() {
         name = NULL;
         val = NULL;
+        type = 0;
     }
 };
 
@@ -40,6 +41,7 @@ public:
     void addVarInfo(VarInfo *v);
     void remove(int i);
     vector<VarInfo *> *getList();
+    VarInfo *getVarInfo(string *name);
     int getSizeOfList();
 };
 
@@ -211,4 +213,4 @@ struct Procedure {
 Program *getExampleTree1(SymbolTable *table);
 bool checkScopeOfAllProcedures(SymbolTable *table, vector<Procedure *> *procs);
 bool checkScopeOfStmts(SymbolTable *table, vector<Stmt *> *stmts, vector<Variable *> *params, int startLine, int endLine);
-bool checkType(vector<Stmt *> *stmts);
+bool checkType(SymbolTable *table, vector<Stmt *> *stmts);

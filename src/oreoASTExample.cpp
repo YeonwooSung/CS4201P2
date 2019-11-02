@@ -49,6 +49,23 @@ void SymbolTable::remove(int i) {
     }
 }
 
+VarInfo *SymbolTable::getVarInfo(string *name) {
+    int size = list->size();
+    VarInfo *res = NULL;
+
+    for (int i = 0; i < size; i++) {
+        VarInfo *info = list->at(i);
+        string *nameOfInfo = info->name;
+
+        if (name->compare(*nameOfInfo) == 0) {
+            res = info;
+            break;
+        }
+    }
+
+    return res;
+}
+
 /**
  * Adds the VarInfo instace to the vector.
  * @param {v} new instance
