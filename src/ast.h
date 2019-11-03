@@ -50,8 +50,7 @@ struct Id {
     string *i;
 };
 
-struct Program
-{
+struct Program {
     string *name;
     vector<Procedure *> *ps;
     Compound *cs;
@@ -210,7 +209,32 @@ struct Procedure {
     int endLine;
 };
 
+class TAC {
+    string *a1;
+    string *a2;
+    string *a3;
+public:
+    TAC();
+    ~TAC();
+    void setA1(string *a1);
+    void setA2(string *a2);
+    void setA3(string *a3);
+    string *getA1();
+    string *getA2();
+    string *getA3();
+};
+
+class TACList {
+    vector<TAC *> *list;
+public:
+    TACList();
+    ~TACList();
+    int appendTAC(TAC *tac);
+};
+
+
 Program *getExampleTree1(SymbolTable *table);
 bool checkScopeOfAllProcedures(SymbolTable *table, vector<Procedure *> *procs);
 bool checkScopeOfStmts(SymbolTable *table, vector<Stmt *> *stmts, vector<Variable *> *params, int startLine, int endLine);
 bool checkType(SymbolTable *table, vector<Stmt *> *stmts);
+TACList *generateTACList(vector<Stmt *> *stmts);

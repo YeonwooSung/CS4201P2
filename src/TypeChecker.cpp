@@ -32,6 +32,7 @@ char getType(SymbolTable *table, Factor * f) {
     } else if (f->e != NULL) {
         return getType(table, f->e);
     } else if (f->id != NULL) {
+        //TODO function arguments
         Id *id = f->id;
         VarInfo *info = table->getVarInfo(id->i);
         return info->type;

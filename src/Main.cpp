@@ -18,7 +18,9 @@ int main() {
         return 0;
     }
 
-    //TODO
+    //TODO checkType -> procedures
+
+    //TODO part3, part4
 
     table->~SymbolTable();
     std::cout << "Program ends" << std::endl;
