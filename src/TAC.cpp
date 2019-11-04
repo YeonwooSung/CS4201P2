@@ -6,12 +6,16 @@ TAC::TAC() {
     a1 = NULL;
     a2 = NULL;
     a3 = NULL;
+    op = NULL;
+    hasAssign = false;
 }
 
 TAC::~TAC() {
+    /* Check if NULL, and free the allocated memory */
     if (a1 != NULL) delete a1;
     if (a2 != NULL) delete a2;
     if (a3 != NULL) delete a3;
+    if (op != NULL) delete op;
 }
 
 void TAC::setA1(string *a1) {
@@ -26,6 +30,10 @@ void TAC::setA3(string *a3) {
     this->a3 = a3;
 }
 
+void TAC::setOp(string *op) {
+    this->op = op;
+}
+
 string *TAC::getA1() {
     return this->a1;
 }
@@ -38,6 +46,10 @@ string *TAC::getA3() {
     return this->a3;
 }
 
+string *TAC::getOp() {
+    return this->op;
+}
+
 
 /* TACList */
 
@@ -46,6 +58,7 @@ TACList::TACList() {
 }
 
 TACList::~TACList() {
+    // check if the pointer is NULL
     if (list != NULL) {
         //TODO delete elements in the list
         delete list;

@@ -147,11 +147,13 @@ bool checkScopeOfParamsForFunctionCall(SymbolTable *table, Call *call, vector<Va
     int size = params->size();
     bool result = true;
 
+    // use for loop to iterate the parameters
     for (int i = 0; i < size; i++) {
         Expression *e = params->at(i);
         result = result && validateExpression(table, e, startLine, endLine);
     }
 
+    // check if the parameters of the procedure is given
     if (parameters != NULL) {
         int numOfParams = parameters->size();
 
@@ -168,6 +170,7 @@ bool checkScopeOfParamsForFunctionCall(SymbolTable *table, Call *call, vector<Va
 bool doSemanticAnalysisForIfStatement(SymbolTable *table, If *stmt, vector<Variable *> *params, int startLine, int endLine) {
     bool checker = false;
 
+    // check whether If1 is used for the If statement (otherwise, If2 is used).
     if (stmt->type != '1') {
         If2 *if2 = stmt->i->if2;
         checker = checker && validateExpression(table, if2->e, startLine, (if2->s1->startLine + 1));

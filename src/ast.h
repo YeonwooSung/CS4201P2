@@ -213,15 +213,19 @@ class TAC {
     string *a1;
     string *a2;
     string *a3;
+    string *op;
 public:
+    bool hasAssign;
     TAC();
     ~TAC();
     void setA1(string *a1);
     void setA2(string *a2);
     void setA3(string *a3);
+    void setOp(string *op);
     string *getA1();
     string *getA2();
     string *getA3();
+    string *getOp();
 };
 
 class TACList {
@@ -237,4 +241,4 @@ Program *getExampleTree1(SymbolTable *table);
 bool checkScopeOfAllProcedures(SymbolTable *table, vector<Procedure *> *procs);
 bool checkScopeOfStmts(SymbolTable *table, vector<Stmt *> *stmts, vector<Variable *> *params, int startLine, int endLine);
 bool checkType(SymbolTable *table, vector<Stmt *> *stmts);
-TACList *generateTACList(vector<Stmt *> *stmts);
+TACList *generateTACList(SymbolTable *table, vector<Stmt *> *stmts);
