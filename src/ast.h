@@ -234,6 +234,7 @@ public:
     TACList();
     ~TACList();
     int appendTAC(TAC *tac);
+    vector<TAC *> *getList();
 };
 
 
