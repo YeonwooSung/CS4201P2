@@ -18,11 +18,34 @@ int main() {
         return 0;
     }
 
-    //TODO checkType -> procedures
+    vector<Procedure *> *procedures = program->ps;
+    int size = procedures->size();
 
-    //TODO part3, part4
+    // use for loop to iterate procedures
+    for (int i = 0; i < size; i++) {
+        Procedure *p = procedures->at(i);
 
-    table->~SymbolTable();
+        // run the type checker for each procedure
+        if (!checkType(table, p->cs->stmts)) {
+            std::cerr << "Error::Type checking failed - " << *(p->name) << std::endl;
+            return 0;
+        }
+    }
+
+    vector<TACList *> list;
+
+    list.push_back(generateTACList(table, program->cs->stmts));
+
+    for (int i = 0; i < size; i++) {
+        Procedure *p = procedures->at(i);
+        list.push_back(generateTACList(table, p->cs->stmts));
+    }
+
+    //TODO generate file for TAC
+
+    //TODO part4
+
+    delete table;
     std::cout << "Program ends" << std::endl;
     return 1;
 }

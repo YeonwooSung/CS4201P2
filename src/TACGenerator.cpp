@@ -407,6 +407,37 @@ void generateTAC_Print(SymbolTable *table, Print *p, TACList *list) {
 }
 
 /**
+ * Generate Three Address Code for function call.
+ * @param {table} symbol table
+ * @param {c} Function call
+ * @param {list} TACList instance
+ */
+void generateTAC_Call(SymbolTable * table, Call *c, TACList* list) {
+    vector<Expression *> *params = c->params;
+    int size = params->size();
+
+    for (int i = 0; i < size; i++) {
+        Expression *e = params->at(i);
+
+        TAC *param = new TAC();
+
+        if (processExpression(table, e, list, param)) {
+            delete param;
+        } else {
+            param->setA1(new string("PushParam"));
+            param->setA1(generateVarName());
+
+            list->appendTAC(param);
+        }
+    }
+
+    TAC *tac = new TAC();
+    tac->setA1(new string("Call"));
+    tac->setA2(new string(*(c->name->i)));
+    list->appendTAC(tac);
+}
+
+/**
  * Generate the three address code for the statements.
  * @param {table} symbol table
  * @param {stmts} list of Stmt instances
@@ -447,7 +478,7 @@ void generateTAC(SymbolTable *table, vector<Stmt *> *stmts, TACList *list) {
                 generateTAC_Assign(table, stmt->statement->a, list);
                 break;
             case 'c':
-                //TODO
+                generateTAC_Call(table, stmt->statement->c, list);
                 break;
             default:
                 std::cerr << "Error::Invalid statement type!" << std::endl;
