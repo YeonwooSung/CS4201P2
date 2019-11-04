@@ -216,6 +216,8 @@ class TAC {
     string *op;
 public:
     bool hasAssign;
+    bool hasGoto;
+    bool isStartOfSection;
     TAC();
     ~TAC();
     void setA1(string *a1);

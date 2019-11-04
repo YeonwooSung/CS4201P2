@@ -3,10 +3,21 @@
 
 
 int varNum;
+int sectionNum = 0;
 const string VARNAME = "@TEMP_";
+const string SECTION_STR = "L";
+const string COLON = ":";
 
+void generateTAC(SymbolTable *table, vector<Stmt *> *stmts, TACList *list);
 bool processExpression(SymbolTable *table, Expression *expr, TACList *list, TAC *tac);
 
+
+string *generateSectionNum() {
+    string name = SECTION_STR + std::to_string(sectionNum) + COLON;
+    sectionNum += 1;
+    string *str = new string(name);
+    return str;
+}
 
 /**
  * Generate the variable name for Three Address Code.
@@ -415,26 +426,140 @@ void generateTAC_Print(SymbolTable *table, Print *p, TACList *list) {
 void generateTAC_Call(SymbolTable * table, Call *c, TACList* list) {
     vector<Expression *> *params = c->params;
     int size = params->size();
+    vector<TAC *> tempList;
 
+    // use for loop to iterate the parameters of the function call
     for (int i = 0; i < size; i++) {
         Expression *e = params->at(i);
 
         TAC *param = new TAC();
 
+        // check if the expression is valid
         if (processExpression(table, e, list, param)) {
             delete param;
         } else {
-            param->setA1(new string("PushParam"));
             param->setA1(generateVarName());
+            param->hasAssign = true;
+
+            TAC *tac = new TAC();
+            tac->setA1(new string("PushParam"));
+            tac->setA2(new string(*(param->getA1())));
 
             list->appendTAC(param);
+            tempList.push_back(tac);
         }
+    }
+
+    size = tempList.size();
+
+    // use for loop to iterate the elements in the tempList
+    for (int i = 0; i < size; i++) {
+        TAC *tac = tempList.at(i);
+        list->appendTAC(tac); //append the TAC instance to the list
     }
 
     TAC *tac = new TAC();
     tac->setA1(new string("Call"));
     tac->setA2(new string(*(c->name->i)));
     list->appendTAC(tac);
+
+    //TODO PopParams ??
+}
+
+void generateTAC_If(SymbolTable *table, If *i, TACList *list) {
+    TAC *expression = new TAC();
+    expression->setA1(generateVarName());
+    expression->hasAssign = true;
+
+    TAC *tac = new TAC();
+    tac->setA1(new string("If"));
+    tac->setA2(new string(*(expression->getA1())));
+    tac->hasGoto = true;
+
+    // check if the IfStmt union contains either If1 or If2
+    if (i->type != '1') {
+        If2 *if2 = i->i->if2;
+        if (processExpression(table, if2->e, list, expression)) {
+            delete expression;
+            delete tac;
+            varNum -= 1;
+            return;
+        } else {
+            list->appendTAC(expression);
+
+            // TAC object for "If t Goto L0"
+            string *str1 = generateSectionNum();
+            tac->setA3(new string(*(str1)));
+            list->appendTAC(tac);
+
+            // TAC object for "Goto L1"
+            tac = new TAC();
+            string *str2 = generateSectionNum();
+            tac->setA1(new string(*(str2)));
+            tac->hasGoto = true;
+            list->appendTAC(tac);
+
+            // TAC object for "L0:"
+            tac = new TAC();
+            tac->setA1(str1);
+            tac->isStartOfSection = true;
+            list->appendTAC(tac);
+
+            generateTAC(table, if2->s1->stmts, list); //process statements in the If statement
+
+            // TAC object for "L1:"
+            tac = new TAC();
+            tac->setA1(str2);
+            tac->isStartOfSection = true;
+            list->appendTAC(tac);
+
+            generateTAC(table, if2->s2->stmts, list); //process statements in the else statement
+        }
+    } else {
+        If1 *if1 = i->i->if1;
+        if (processExpression(table, if1->e, list, expression)) {
+            delete expression;
+            delete tac;
+            varNum -= 1;
+            return;
+        } else {
+            list->appendTAC(expression);
+
+            // TAC object for "If t Goto L0"
+            string *str1 = generateSectionNum();
+            tac->setA3(new string(*(str1)));
+            list->appendTAC(tac);
+
+            // TAC object for "Goto L1"
+            tac = new TAC();
+            string *str2 = generateSectionNum();
+            tac->setA1(new string(*(str2)));
+            tac->hasGoto = true;
+            list->appendTAC(tac);
+
+            // TAC object for "L0:"
+            tac = new TAC();
+            tac->setA1(str1);
+            tac->isStartOfSection = true;
+            list->appendTAC(tac);
+
+            generateTAC(table, if1->s->stmts, list); //process statements in the If statement
+
+            // TAC object for "L1:"
+            tac = new TAC();
+            tac->setA1(str2);
+            tac->isStartOfSection = true;
+            list->appendTAC(tac);
+        }
+    }
+}
+
+void generateTAC_While(SymbolTable *table, While *w, TACList *list) {
+    TAC *expression = new TAC();
+    expression->setA1(generateVarName());
+    expression->hasAssign = true;
+
+    //TODO
 }
 
 /**
@@ -461,18 +586,10 @@ void generateTAC(SymbolTable *table, vector<Stmt *> *stmts, TACList *list) {
                 generateTAC_Get(table, stmt->statement->g, list);
                 break;
             case 'w':
-                //TODO
+                generateTAC_While(table, stmt->statement->w, list);
                 break;
             case 'i':
-                // check if this If union contains either If1 or If2
-                if (stmt->type != '1') {
-                    If2 *if2 = stmt->statement->i->i->if2;
-                    //TODO
-                } else {
-                    If1 *if1 = stmt->statement->i->i->if1;
-                    //TODO
-                }
-
+                generateTAC_If(table, stmt->statement->i, list);
                 break;
             case 'a':
                 generateTAC_Assign(table, stmt->statement->a, list);
@@ -484,8 +601,6 @@ void generateTAC(SymbolTable *table, vector<Stmt *> *stmts, TACList *list) {
                 std::cerr << "Error::Invalid statement type!" << std::endl;
                 std::exit(EXIT_FAILURE);
         }
-
-        //
     }
 }
 

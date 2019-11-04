@@ -8,6 +8,8 @@ TAC::TAC() {
     a3 = NULL;
     op = NULL;
     hasAssign = false;
+    hasGoto = false;
+    isStartOfSection = false;
 }
 
 TAC::~TAC() {
