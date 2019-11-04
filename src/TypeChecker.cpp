@@ -32,7 +32,6 @@ char getType(SymbolTable *table, Factor * f) {
     } else if (f->e != NULL) {
         return getType(table, f->e);
     } else if (f->id != NULL) {
-        //TODO function arguments
         Id *id = f->id;
         VarInfo *info = table->getVarInfo(id->i);
         return info->type;
@@ -42,7 +41,7 @@ char getType(SymbolTable *table, Factor * f) {
 }
 
 char getType(SymbolTable *table, Term *t) {
-    if (t == NULL) return 0;
+    if (t == NULL) return -1;
 
     // check which attribute is not NULL
     if (t->t1 != NULL) {
@@ -57,23 +56,31 @@ char getType(SymbolTable *table, Term *t) {
         char type1 = getType(table, f1);
         char type2 = getType(table, f2);
 
+        if (type1 == 0) {
+            return type2;
+        }
+
+        if (type2 == 0) {
+            return type1;
+        }
+
         // compare the type of 2 Factors
         if (type1 != type2) {
-            return 0;
+            return -1;
         } else {
 
             // check if the MulOp is And
             if (*mulop != And) {
-                return (type1 == 'i' ? 'i' : 0);
+                return (type1 == 'i' ? 'i' : -1);
             } else {
-                return (type1 == 'b' ? 'b' : 0);
+                return (type1 == 'b' ? 'b' : -1);
             }
         }
     }
 }
 
 char getType(SymbolTable *table, Simple *s) {
-    if (s == NULL) return 0;
+    if (s == NULL) return -1;
 
     // check which attribute is not NULL
     if (s->e1 != NULL) {
@@ -87,22 +94,30 @@ char getType(SymbolTable *table, Simple *s) {
         char type1 = getType(table, t1);
         char type2 = getType(table, t2);
 
+        if (type1 == 0) {
+            return type2;
+        }
+
+        if (type2 == 0) {
+            return type1;
+        }
+
         // compare the type of 2 Terms
         if (type1 != type2) {
-            return 0;
+            return -1;
         } else {
             // check if the AddOp is Or
             if (*addop != Or) {
-                return (type1 == 'i' ? 'i' : 0);
+                return (type1 == 'i' ? 'i' : -1);
             } else {
-                return (type1 == 'b' ? 'b' : 0);
+                return (type1 == 'b' ? 'b' : -1);
             }
         }
     }
 }
 
 char getType(SymbolTable *table, Expression *e) {
-    if (e == NULL) return 0;
+    if (e == NULL) return -1;
 
     if (e->type != 's') {
         Expr2 *expr2 = e->expr->e2;
@@ -113,11 +128,19 @@ char getType(SymbolTable *table, Expression *e) {
         char type1 = getType(table, s1);
         char type2 = getType(table, s2);
 
+        if (type1 == 0) {
+            return type2;
+        }
+
+        if (type2 == 0) {
+            return type1;
+        }
+
         // compare types of 2 simple expressions
         if (type1 != type2) {
-            return 0;
+            return -1;
         } else {
-            return (type1 == 'i' ? 'i' : 0);
+            return (type1 == 'i' ? 'i' : -1);
         }
     } else {
         return getType(table, e->expr->e1);
@@ -150,6 +173,18 @@ bool checkType(SymbolTable *table, Term *t) {
 
         char type1 = getType(table, f1);
         char type2 = getType(table, f2);
+
+        if (type1 == 0 && type2 != -1) {
+            return true;
+        } else {
+            return false;
+        }
+
+        if (type2 == 0 && type1 != -1) {
+            return true;
+        } else {
+            return false;
+        }
 
         // compare the types of 2 Factors
         if (type1 != type2) {
@@ -241,7 +276,7 @@ bool checkType(SymbolTable *table, Expression *expression) {
             }
 
         } else {
-            checker = (type1 == 'i' || type1 == 0 || type2 == 0);
+            checker = (type1 == 'i' || type1 == 0);
         }
     } else {
         Simple *simple = expression->expr->e1;
@@ -290,7 +325,6 @@ bool checkType(SymbolTable *table, Stmt *stmt) {
             checker = checker && checkType(table, stmt->statement->a->e);
             break;
         case 'c':
-            //TODO
             break;
         default:
             std::cerr << "Error::Invalid statement type!" << std::endl;
