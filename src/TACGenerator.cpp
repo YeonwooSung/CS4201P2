@@ -5,7 +5,13 @@
 int varNum;
 const string VARNAME = "@TEMP_";
 
+bool processExpression(SymbolTable *table, Expression *expr, TACList *list, TAC *tac);
 
+
+/**
+ * Generate the variable name for Three Address Code.
+ * @return The generated name
+ */
 string *generateVarName() {
     string name = VARNAME + std::to_string(varNum);
     varNum += 1;
@@ -13,25 +19,121 @@ string *generateVarName() {
     return varName;
 }
 
-string *generateFactorString(SymbolTable *table, Factor *f) {
-    //TODO
+/**
+ * Generates the suitable string for given Factor.
+ * @param {table} symbol table
+ * @param {f} Factor
+ * @param {list} list of TAC
+ * @return The generated factor string.
+ */
+string *generateFactorString(SymbolTable *table, Factor *f, TACList *list) {
+    if (f->con != NULL) {
+        return new string(*(f->con));
+
+    } else if (f->e != NULL) {
+        TAC *tac = new TAC();
+        tac->setA1(generateVarName()); //set first address of TAC with temp name
+        tac->hasAssign = true;
+
+        if (processExpression(table, f->e, list, tac)) {
+            delete tac;
+            return NULL;
+        }
+        list->appendTAC(tac);
+
+        return new string(*(tac->getA1()));
+
+    } else if (f->id != NULL) {
+        return new string(*(f->id->i));
+
+    } else if (f->note != NULL) {
+        TAC *tac = new TAC();
+        tac->hasAssign = true;
+        tac->setA1(generateVarName()); //set first address of TAC with temp name
+
+        if (processExpression(table, f->note, list, tac)) {
+            delete tac;
+            return NULL;
+        }
+
+        list->appendTAC(tac);
+        return new string(*(tac->getA1()));
+    }
 
     return NULL;
 }
 
-string *generateTAC_Term(SymbolTable *table, Term *var) {
-    //TODO
+string *generateTAC_Term(SymbolTable *table, Term *t, TACList *list) {
+    TAC *tac = new TAC();
+    tac->setA1(generateVarName());
+    tac->hasAssign = true;
 
-    return NULL;
+    // Check whether Term1 is used for Term. Otherwise, Term2 is used.
+    if (t->t1 != NULL) {
+        Factor *f = t->t1->f;
+        string *s = generateFactorString(table, f, list);
+
+        if (s != NULL) {
+            tac->setA2(s);
+        } else {
+            return NULL;
+        }
+    } else {
+        Term2 *t2 = t->t2;
+        MulOp mulop = *(t2->op);
+
+        // use switch statement to check which operator is used
+        switch(mulop) {
+            case Mul:
+                tac->setOp(new string("*"));
+                break;
+            case Div:
+                tac->setOp(new string("/"));
+                break;
+            case And:
+                tac->setOp(new string("&&"));
+                break;
+            default:
+                return NULL;
+        }
+
+        string *s = generateFactorString(table, t2->f1, list); //get the factor string
+
+        // check if returned string is NULL
+        if (s != NULL) {
+            tac->setA2(s);
+        } else {
+            return NULL;
+        }
+
+        s = generateFactorString(table, t2->f2, list); //get the factor string
+
+        // check if returned string is NULL
+        if (s != NULL) {
+            tac->setA3(s);
+        } else {
+            return NULL;
+        }
+    }
+
+    list->appendTAC(tac); //append the generated ThreeAddressCode instance to the list
+
+    return tac->getA1();
 }
 
-bool processSimpleExpression(SymbolTable *table, Simple *s, TAC *tac) {
+bool processSimpleExpression(SymbolTable *table, Simple *s, TAC *tac, TACList *list) {
     if (s->e1 != NULL) {
         Term *t = s->e1->t;
 
         if (t->t1 != NULL) {
             Factor *f = t->t1->f;
-            tac->setA2(generateFactorString(table, f));
+            string *s = generateFactorString(table, f, list);
+
+            if (s != NULL) {
+                tac->setA2(s);
+            } else {
+                return true;
+            }
 
         } else if (t->t2 != NULL) {
             Term2 *t2 = t->t2;
@@ -51,8 +153,21 @@ bool processSimpleExpression(SymbolTable *table, Simple *s, TAC *tac) {
                     return true;
             }
 
-            tac->setA2(generateFactorString(table, t2->f1));
-            tac->setA3(generateFactorString(table, t2->f2));
+            string *s = generateFactorString(table, t2->f1, list);
+            // check if returned string is NULL
+            if (s != NULL) {
+                tac->setA2(s);
+            } else {
+                return true;
+            }
+
+            s = generateFactorString(table, t2->f2, list);
+            // check if returned string is NULL
+            if (s != NULL) {
+                tac->setA3(s);
+            } else {
+                return true;
+            }
 
         } else {
             return true;
@@ -76,11 +191,88 @@ bool processSimpleExpression(SymbolTable *table, Simple *s, TAC *tac) {
                 return true;
         }
 
-        tac->setA2(generateTAC_Term(table, s2->t1));
-        tac->setA3(generateTAC_Term(table, s2->t2));
+        tac->setA2(generateTAC_Term(table, s2->t1, list));
+        tac->setA3(generateTAC_Term(table, s2->t2, list));
 
     } else {
         return true;
+    }
+
+    return false;
+}
+
+bool processExpression(SymbolTable *table, Expression *expr, TACList *list, TAC *tac) {
+    // check the type of expression
+    if (expr->type != 's') {
+        Expr2 *e = expr->expr->e2;
+        Simple *s1 = e->e1;
+        Simple *s2 = e->e2;
+
+        TAC *tac1 = new TAC();
+        tac1->hasAssign = true;
+
+        // Check if the Simple is valid. If not, free the assigned memory.
+        if (processSimpleExpression(table, s1, tac1, list)) {
+            delete tac1;
+            return true;
+        }
+
+        tac1->setA1(generateVarName()); //set the first address with the temp name
+
+        TAC *tac2 = new TAC();
+        tac2->hasAssign = true;
+
+        // Check if the Simple is valid. If not, free the assigned memory.
+        if (processSimpleExpression(table, s2, tac2, list)) {
+            delete tac1;
+            delete tac2;
+            return true;
+        }
+
+        tac2->setA1(generateVarName()); //set the first address with the temp name
+
+        // append the TAC instaces to the list
+        list->appendTAC(tac1);
+        list->appendTAC(tac2);
+
+        string *str1 = new string(*(tac1->getA1()));
+        string *str2 = new string(*(tac2->getA1()));
+        RelOp relop = *(e->op);
+
+        tac->setA2(str1);
+        tac->setA3(str2);
+
+        switch(relop) {
+            case Eq:
+                tac->setOp(new string("=="));
+                break;
+            case NEq:
+                tac->setOp(new string("!="));
+                break;
+            case LT:
+                tac->setOp(new string("<"));
+                break;
+            case LTE:
+                tac->setOp(new string("<="));
+                break;
+            case GT:
+                tac->setOp(new string(">"));
+                break;
+            case GTE:
+                tac->setOp(new string(">="));
+                break;
+            default:
+                delete tac1;
+                delete tac2;
+                return true;
+        }
+
+    } else {
+        Simple *s = expr->expr->e1;
+
+        if (processSimpleExpression(table, s, tac, list)) {
+            return true;
+        }
     }
 
     return false;
@@ -92,47 +284,10 @@ void generateTAC_Assign(SymbolTable *table, Assign *a, TACList *list) {
     tac->hasAssign = true;
     tac->setA1(new string(*(a->i->i))); // set the first address with the name of the variable
 
-    // check the type of expression
-    if (a->e->type != 's') {
-        Expr2 *e = a->e->expr->e2;
-        Simple *s1 = e->e1;
-        Simple *s2 = e->e2;
-
-        TAC *tac1 = new TAC();
-
-        // Check if the Simple is valid. If not, free the assigned memory.
-        if (processSimpleExpression(table, s1, tac1)) {
-            delete tac1;
-            delete tac;
-            return;
-        }
-
-        tac1->setA1(generateVarName()); //set the first address with the temp name
-
-        TAC *tac2 = new TAC();
-
-        // Check if the Simple is valid. If not, free the assigned memory.
-        if (processSimpleExpression(table, s2, tac2)) {
-            delete tac1;
-            delete tac2;
-            delete tac;
-            return;
-        }
-
-        tac2->setA1(generateVarName()); //set the first address with the temp name
-
-        // append the TAC instaces to the list
-        list->appendTAC(tac1);
-        list->appendTAC(tac2);
-
-        //TODO tac -> op (RelOp)
-    } else {
-        Simple *s = a->e->expr->e1;
-
-        if (processSimpleExpression(table, s, tac)) {
-            delete tac;
-            return;
-        }
+    // check if the expression is valid
+    if (processExpression(table, a->e, list, tac)) {
+        delete tac;
+        return;
     }
 
     list->appendTAC(tac);
