@@ -183,6 +183,26 @@ bool checkType(SymbolTable *table, Simple *s) {
         char type1 = getType(table, t1);
         char type2 = getType(table, t2);
 
+        if (type1 == 0 && type2 == 0) {
+            return true;
+        }
+
+        if (type1 == 0) {
+            if (*addop != Or) {
+                return (type2 == 'i');
+            } else {
+                return (type2 == 'b');
+            }
+        }
+
+        if (type2 == 0) {
+            if (*addop != Or) {
+                return (type1 == 'i');
+            } else {
+                return (type1 == 'b');
+            }
+        }
+
         // compare types of 2 Terms
         if (type1 != type2) {
             checker = false;
@@ -206,7 +226,6 @@ bool checkType(SymbolTable *table, Expression *expression) {
     // Check if the Expression contains Expr2 or Simple
     if (expression->type != 's') {
         Expr2 *expr2 = expression->expr->e2;
-        RelOp *relop = expr2->op;
         Simple *s1 = expr2->e1;
         Simple *s2 = expr2->e2;
 
@@ -215,9 +234,14 @@ bool checkType(SymbolTable *table, Expression *expression) {
 
         // compare types of 2 simple expressions
         if (type1 != type2) {
-            checker = false;
+            if ((type1 == 0 || type2 == 0) && (type1 == 'i' || type2 == 'i')) {
+                checker = true;
+            } else {
+                checker = false;
+            }
+
         } else {
-            checker = (type1 == 'i');
+            checker = (type1 == 'i' || type1 == 0 || type2 == 0);
         }
     } else {
         Simple *simple = expression->expr->e1;
@@ -280,7 +304,7 @@ bool checkType(SymbolTable *table, vector<Stmt *> *stmts) {
     if (stmts == NULL) return false;
 
     int size = stmts->size();
-    bool checker = false;
+    bool checker = true;
 
     for (int i = 0; i < size; i++) {
         Stmt *stmt = stmts->at(i);
