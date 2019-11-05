@@ -458,12 +458,16 @@ void generateTAC_Call(SymbolTable * table, Call *c, TACList* list) {
         list->appendTAC(tac); //append the TAC instance to the list
     }
 
+    // TAC for Call command
     TAC *tac = new TAC();
     tac->setA1(new string("Call"));
     tac->setA2(new string(*(c->name->i)));
     list->appendTAC(tac);
 
-    //TODO PopParams ??
+    // TAC for "PopParams"
+    TAC *popParams = new TAC();
+    popParams->setA1(new string("PopParams"));
+    list->appendTAC(popParams);
 }
 
 void generateTAC_If(SymbolTable *table, If *i, TACList *list) {
@@ -554,12 +558,69 @@ void generateTAC_If(SymbolTable *table, If *i, TACList *list) {
     }
 }
 
+/**
+ * Generate Three Address Code for While statement.
+ * @param {table} symbol table
+ * @param {w} While statement
+ * @param {list} The list of TAC instances
+ */
 void generateTAC_While(SymbolTable *table, While *w, TACList *list) {
     TAC *expression = new TAC();
     expression->setA1(generateVarName());
     expression->hasAssign = true;
 
-    //TODO
+    // check if the boolean expression of the while statement is valid
+    if (processExpression(table, w->e, list, expression)) {
+        delete expression;
+        return;
+    }
+
+    expression->setA1(generateVarName());
+    list->appendTAC(expression);
+
+    // TAC object for "If t Goto L0"
+    TAC *tac_if = new TAC();
+    tac_if->setA1(new string("If"));
+    tac_if->setA2(new string(*(expression->getA1())));
+    tac_if->hasGoto = true;
+    string *str1 = generateSectionNum();
+    tac_if->setA3(new string(*(str1)));
+    list->appendTAC(tac_if);
+
+    // TAC object for "Goto L1"
+    TAC *tac_goto = new TAC();
+    string *str2 = generateSectionNum();
+    tac_goto->setA1(new string(*(str2)));
+    tac_goto->hasGoto = true;
+    list->appendTAC(tac_goto);
+
+    // TAC object for "L0:"
+    TAC *label1 = new TAC();
+    label1->setA1(str1);
+    label1->isStartOfSection = true;
+    list->appendTAC(label1);
+
+    generateTAC(table, w->s1->stmts, list); //process statements in the While statement
+
+    // TAC object for "If t Goto L0"
+    tac_if = new TAC();
+    tac_if->setA1(new string("If"));
+    tac_if->setA2(new string(*(expression->getA1())));
+    tac_if->hasGoto = true;
+    tac_if->setA3(new string(*(str1)));
+    list->appendTAC(tac_if);
+
+    // TAC object for "Goto L1"
+    tac_goto = new TAC();
+    tac_goto->setA1(new string(*(str2)));
+    tac_goto->hasGoto = true;
+    list->appendTAC(tac_goto);
+
+    // TAC object for "L1:"
+    TAC *label2 = new TAC();
+    label2->setA1(str2);
+    label2->isStartOfSection = true;
+    list->appendTAC(label2);
 }
 
 /**
@@ -571,6 +632,7 @@ void generateTAC_While(SymbolTable *table, While *w, TACList *list) {
 void generateTAC(SymbolTable *table, vector<Stmt *> *stmts, TACList *list) {
     int size = stmts->size();
 
+    // use for loop to iterate statements
     for (int i = 0; i < size; i++) {
         Stmt *stmt = stmts->at(i);
 
