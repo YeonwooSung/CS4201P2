@@ -25,6 +25,8 @@ int main() {
     for (int i = 0; i < size; i++) {
         Procedure *p = procedures->at(i);
 
+        //TODO insert parameters into the symbol table, and remove them from table after checking.
+
         // run the type checker for each procedure
         if (!checkType(table, p->cs->stmts)) {
             std::cerr << "Error::Type checking failed - " << *(p->name) << std::endl;

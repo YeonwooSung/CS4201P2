@@ -325,6 +325,7 @@ bool checkType(SymbolTable *table, Stmt *stmt) {
             checker = checker && checkType(table, stmt->statement->a->e);
             break;
         case 'c':
+            //TODO
             break;
         default:
             std::cerr << "Error::Invalid statement type!" << std::endl;
