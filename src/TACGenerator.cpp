@@ -6,14 +6,13 @@ int varNum;
 int sectionNum = 0;
 const string VARNAME = "@TEMP_";
 const string SECTION_STR = "L";
-const string COLON = ":";
 
 void generateTAC(SymbolTable *table, vector<Stmt *> *stmts, TACList *list);
 bool processExpression(SymbolTable *table, Expression *expr, TACList *list, TAC *tac);
 
 
 string *generateSectionNum() {
-    string name = SECTION_STR + std::to_string(sectionNum) + COLON;
+    string name = SECTION_STR + std::to_string(sectionNum);
     sectionNum += 1;
     string *str = new string(name);
     return str;

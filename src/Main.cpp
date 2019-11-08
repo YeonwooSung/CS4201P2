@@ -34,7 +34,7 @@ int main() {
         }
     }
 
-    vector<TACList *> list;
+    vector<TACList *> list; //list that contains lists of ThreeAddressCode instances
 
     list.push_back(generateTACList(table, program->cs->stmts));
 
