@@ -94,7 +94,17 @@ TACList::TACList() {
 TACList::~TACList() {
     // check if the pointer is NULL
     if (list != NULL) {
-        //TODO delete elements in the list
+        int size = list->size();
+
+        // use while loop to delete all elements in the vector.
+        while (size > 0) {
+            TAC *tac = list->at(size - 1);
+            delete tac;
+            list->pop_back();
+
+            size = list->size();
+        }
+
         delete list;
     }
 }
