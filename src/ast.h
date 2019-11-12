@@ -246,3 +246,4 @@ bool checkScopeOfAllProcedures(SymbolTable *table, vector<Procedure *> *procs);
 bool checkScopeOfStmts(SymbolTable *table, vector<Stmt *> *stmts, vector<Variable *> *params, int startLine, int endLine);
 bool checkType(SymbolTable *table, vector<Stmt *> *stmts, vector<Procedure *> *procedures);
 TACList *generateTACList(SymbolTable *table, vector<Stmt *> *stmts);
+void writeTAC(vector<TACList *> list, vector<Procedure *> *procedures);

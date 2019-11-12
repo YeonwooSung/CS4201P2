@@ -69,7 +69,8 @@ int main() {
         list.push_back(generateTACList(table, p->cs->stmts));
     }
 
-    //TODO generate TAC file
+    // write three address code file
+    writeTAC(list, procedures);
 
     //TODO part4
 
