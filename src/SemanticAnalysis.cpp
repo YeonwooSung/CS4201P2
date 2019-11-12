@@ -159,9 +159,6 @@ bool checkScopeOfParamsForFunctionCall(SymbolTable *table, Call *call, vector<Va
 
         // remove parameters from symbol table
         table->remove(numOfParams);
-
-        //TODO need to test function call!!
-        std::cout << "numOfParams = " << numOfParams << " , size = " << size << std::endl;
     }
 
     return result;
