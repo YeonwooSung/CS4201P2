@@ -87,12 +87,17 @@ char getType(SymbolTable *table, Simple *s) {
         Term *t = s->e1->t;
         return getType(table, t);
     } else {
+        // Since this expression contains the Add operator, all both term1 and term2 should be an integer.
+        // So, this method will check the type of 2 terms, and return -1 if the type of the term is not an integer.
+
         AddOp *addop = s->e2->op;
         Term *t1 = s->e2->t1;
         Term *t2 = s->e2->t2;
 
         char type1 = getType(table, t1);
         char type2 = getType(table, t2);
+
+        /* check the returned value */
 
         if (type1 == 0) {
             return type2;
@@ -102,7 +107,7 @@ char getType(SymbolTable *table, Simple *s) {
             return type1;
         }
 
-        // compare the type of 2 Terms
+        // compare the types of 2 Terms
         if (type1 != type2) {
             return -1;
         } else {
@@ -143,6 +148,7 @@ char getType(SymbolTable *table, Expression *e) {
             return (type1 == 'i' ? 'i' : -1);
         }
     } else {
+        // call the function to get the type of simple expression.
         return getType(table, e->expr->e1);
     }
 }
@@ -162,27 +168,31 @@ bool checkType(SymbolTable *table, Term *t) {
 
     bool checker = true;
 
+    // check if the pointer is not null
     if (t->t1 != NULL) {
         Factor *f = t->t1->f;
-        checker = checkType(table, f);
+        checker = checkType(table, f); //check the type of Factor
     } else {
         Term2 *t2 = t->t2;
         MulOp *mulop = t2->op;
         Factor *f1 = t2->f1;
         Factor *f2 = t2->f2;
 
+        // Since the given Term contains the MulOp, both factor1 and factor2 should be an integer.
+        // Thus, this method will check the type of factors, and return suitable boolean value.
+
         char type1 = getType(table, f1);
         char type2 = getType(table, f2);
 
-        if (type1 == 0 && type2 != -1) {
-            return true;
-        } else {
+        if (type1 == 0) {
+            if (type2 != -1) return true;
+
             return false;
         }
 
-        if (type2 == 0 && type1 != -1) {
-            return true;
-        } else {
+        if (type2 == 0) {
+            if (type1 != -1) return true;
+
             return false;
         }
 
@@ -214,6 +224,9 @@ bool checkType(SymbolTable *table, Simple *s) {
         AddOp *addop = s2->op;
         Term *t1 = s2->t1;
         Term *t2 = s2->t2;
+
+        // Since the given expression contains the AddOp, both factor1 and factor2 should be an integer.
+        // Thus, this method will check the type of factors, and return suitable boolean value.
 
         char type1 = getType(table, t1);
         char type2 = getType(table, t2);
@@ -264,6 +277,8 @@ bool checkType(SymbolTable *table, Expression *expression) {
         Simple *s1 = expr2->e1;
         Simple *s2 = expr2->e2;
 
+        // The Expr2 has relational operator, thus, the type of both s1 and s2 should be integer.
+
         char type1 = getType(table, s1);
         char type2 = getType(table, s2);
 
@@ -286,7 +301,43 @@ bool checkType(SymbolTable *table, Expression *expression) {
     return checker;
 }
 
-bool checkType(SymbolTable *table, Stmt *stmt) {
+bool checkType_Call(SymbolTable *table, Call *call, vector<Procedure *> *procedures) {
+    if (procedures == NULL) return false; // check if the pointer is null to avoid the null pointer exception
+
+    int size = procedures->size();
+    string targetName = *(call->name->i);
+    Procedure *p = NULL;
+
+    // use for loop to iterate the procedures
+    for (int i = 0; i < size; i++) {
+        Procedure *procedure = procedures->at(i);
+
+        if (procedure->name->compare(targetName) == 0) {
+            p = procedure;
+            break;
+        }
+    }
+
+    if (p == NULL) return false; // check if the pointer is null to avoid the null pointer exception
+
+    int totalNumOfParams = call->params->size();
+    bool checker = true;
+
+    // use for loop to iterate parameters
+    for (int i = 0; i < totalNumOfParams; i++) {
+        Expression *paramExpression = call->params->at(i);
+        char type = getType(table, paramExpression);
+
+        // check if the type of the parameter that is used for the function call is valid
+        if (!(p->params->at(i)->varType == type) && type != 0) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool checkType(SymbolTable *table, Stmt *stmt, vector<Procedure *> *procedures) {
     if (stmt == NULL) return false;
 
     bool checker = true;
@@ -306,26 +357,26 @@ bool checkType(SymbolTable *table, Stmt *stmt) {
             break;
         case 'w':
             checker = checker && checkType(table, stmt->statement->w->e);
-            checker = checker && checkType(table, stmt->statement->w->s1->stmts);
+            checker = checker && checkType(table, stmt->statement->w->s1->stmts, procedures);
             break;
         case 'i':
             // check if this If union contains either If1 or If2
             if (stmt->type != '1') {
                 If2 *if2 = stmt->statement->i->i->if2;
                 checker = checker && checkType(table, if2->e);
-                checker = checker && checkType(table, if2->s1->stmts);
-                checker = checker && checkType(table, if2->s2->stmts);
+                checker = checker && checkType(table, if2->s1->stmts, procedures);
+                checker = checker && checkType(table, if2->s2->stmts, procedures);
             } else {
                 If1 *if1 = stmt->statement->i->i->if1;
                 checker = checker && checkType(table, if1->e);
-                checker = checker && checkType(table, if1->s->stmts);
+                checker = checker && checkType(table, if1->s->stmts, procedures);
             }
             break;
         case 'a':
             checker = checker && checkType(table, stmt->statement->a->e);
             break;
         case 'c':
-            //TODO
+            checker = checker && checkType_Call(table, stmt->statement->c, procedures);
             break;
         default:
             std::cerr << "Error::Invalid statement type!" << std::endl;
@@ -335,15 +386,16 @@ bool checkType(SymbolTable *table, Stmt *stmt) {
     return checker;
 }
 
-bool checkType(SymbolTable *table, vector<Stmt *> *stmts) {
+bool checkType(SymbolTable *table, vector<Stmt *> *stmts, vector<Procedure *> *procedures) {
     if (stmts == NULL) return false;
 
     int size = stmts->size();
     bool checker = true;
 
+    // use for loop to iterate statements in the vector
     for (int i = 0; i < size; i++) {
         Stmt *stmt = stmts->at(i);
-        checkType(table, stmt);
+        checkType(table, stmt, procedures);
     }
 
     return checker;

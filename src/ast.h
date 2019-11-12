@@ -108,6 +108,7 @@ struct Call {
 struct Variable {
     Var *v;
     char type; // 'i' for Id, 'a' for Assign
+    char varType; // 'b' for bool, 'i' for int, and 's' for string, defulat 0 (not defined)
 };
 
 union Statement {
@@ -243,5 +244,5 @@ public:
 Program *getExampleTree1(SymbolTable *table);
 bool checkScopeOfAllProcedures(SymbolTable *table, vector<Procedure *> *procs);
 bool checkScopeOfStmts(SymbolTable *table, vector<Stmt *> *stmts, vector<Variable *> *params, int startLine, int endLine);
-bool checkType(SymbolTable *table, vector<Stmt *> *stmts);
+bool checkType(SymbolTable *table, vector<Stmt *> *stmts, vector<Procedure *> *procedures);
 TACList *generateTACList(SymbolTable *table, vector<Stmt *> *stmts);
