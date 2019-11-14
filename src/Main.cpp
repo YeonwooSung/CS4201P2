@@ -6,6 +6,8 @@ int main() {
     SymbolTable *table = new SymbolTable();
     Program *program = getExampleTree1(table); //get the AST
 
+    if (!checkScopeOfStmts(table, program->cs->stmts, NULL, program->cs->startLine, program->cs->endLine)) std::cerr << "??" << endl;
+
     // run the semantic analysis
     if (!checkScopeOfAllProcedures(table, program->ps) || !checkScopeOfStmts(table, program->cs->stmts, NULL, program->cs->startLine, program->cs->endLine)) {
         std::cerr << "Error::Semantic analysis failed" << std::endl;
@@ -61,12 +63,25 @@ int main() {
 
     vector<TACList *> list; //list that contains lists of ThreeAddressCode instances
 
-    list.push_back(generateTACList(table, program->cs->stmts));
+    // generate three address codes for main method
+    TACList *tacList_mainFunction = generateTACList(table, program->cs->stmts);
+    TAC *endOfMainFunction = new TAC();
+    endOfMainFunction->setA1(new string("EndFunc"));
+    tacList_mainFunction->appendTAC(endOfMainFunction);
+    list.push_back(tacList_mainFunction);
 
     // use for loop to iterate the procedures in the procedure list
     for (int i = 0; i < size; i++) {
+        /* Generate three address codes for procedures */
+
         Procedure *p = procedures->at(i);
-        list.push_back(generateTACList(table, p->cs->stmts));
+
+        TACList *tacList = generateTACList(table, p->cs->stmts);
+        TAC *endOfFunction = new TAC();
+        endOfFunction->setA1(new string("EndFunc"));
+
+        tacList->appendTAC(endOfFunction);
+        list.push_back(tacList);
     }
 
     // write three address code file

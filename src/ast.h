@@ -21,11 +21,13 @@ struct VarInfo {
     string *val;
     char type; // 'b' for bool, 'i' for int, and 's' for string, defulat 0 (not defined)
     int declaredLine;
+    bool defined;
 
     VarInfo() {
         name = NULL;
         val = NULL;
         type = 0;
+        defined = false; //initial value of defined is false
     }
 };
 

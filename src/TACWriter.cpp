@@ -71,7 +71,7 @@ void writeTAC(TACList *tacList, ofstream &tacFile, string functionName) {
     int size = list->size();
 
     tacFile << functionName << ":\n";
-    tacFile << "    BeginFunc;" << ":\n";
+    tacFile << "    BeginFunc;" << "\n";
 
     // use for loop to iterate TAC instances in the list
     for (int i = 0; i < size; i++) {
@@ -99,7 +99,7 @@ void writeTAC(vector<TACList *> list, vector<Procedure *> *procedures) {
     }
 
     // validate the size of lists
-    if (size -1 != procedures->size()) {
+    if (size - 1 != procedures->size()) {
         cout << "Error::Invalid size of procedures!" << endl;
         cout << "     expected = " << (size - 1) << endl;
         cout << "     actual = " << procedures->size() << endl;

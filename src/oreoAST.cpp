@@ -4,86 +4,14 @@
 using namespace std;
 
 
-/**
- * Constructor
- */
-SymbolTable::SymbolTable() {
-    list = new vector<VarInfo *>;
+Program *getExampleTree_error1(SymbolTable *table) {
+    Program *p = new Program;
+    p->ps = new vector<Procedure *>;
+
+    //TODO
+
+    return NULL;
 }
-
-/**
- * Destructor
- */
-SymbolTable::~SymbolTable() {
-    if (list != NULL) {
-        // remove instances in the vector
-        int size = list->size();
-
-        for (int i = 0; i < size; i++) {
-            VarInfo *info = list->at(i);
-            delete info;
-        }
-
-        delete list;
-    }
-}
-
-/**
- * Getter for list.
- * @return list
- */
-vector<VarInfo *> *SymbolTable::getList() {
-    return list;
-}
-
-void SymbolTable::remove(int i) {
-    int size = list->size();
-    int limit = i;
-
-    if (i > size) {
-        limit = size;
-    }
-
-    for (int a = 0; a < limit; a++) {
-        list->pop_back();
-    }
-}
-
-VarInfo *SymbolTable::getVarInfo(string *name) {
-    int size = list->size();
-    VarInfo *res = NULL;
-
-    for (int i = 0; i < size; i++) {
-        VarInfo *info = list->at(i);
-        string *nameOfInfo = info->name;
-
-        if (name->compare(*nameOfInfo) == 0) {
-            res = info;
-            break;
-        }
-    }
-
-    return res;
-}
-
-/**
- * Adds the VarInfo instace to the vector.
- * @param {v} new instance
- */
-void SymbolTable::addVarInfo(VarInfo *v) {
-    if (list == NULL) list = new vector<VarInfo *>;
-
-    list->push_back(v);
-}
-
-/**
- * Gets the size of the list.
- * @return size of the list
- */
-int SymbolTable::getSizeOfList() {
-    return list->size();
-}
-
 
 Program *getExampleTree1(SymbolTable *table) {
     Program *p = new Program;
@@ -135,40 +63,65 @@ Program *getExampleTree1(SymbolTable *table) {
     Variable *variableN = new Variable;
     variableN->varType = 'i';
     Var *varN = new Var;
-    varN->id = new Id;
-    varN->id->i = new string("n");
+    varN->a = new Assign;
+    varN->a->e = new Expression;
+    varN->a->i = new Id;
+    varN->a->i->i = new string("n");
+
+    varN->a->e = new Expression;
+    varN->a->e->expr = new Expr;
+    varN->a->e->type = 's';
+    varN->a->e->expr->e1 = new Simple;
+    varN->a->e->expr->e1->e1 = new Simple1;
+    varN->a->e->expr->e1->e1->t = new Term;
+    varN->a->e->expr->e1->e1->t->t1 = new Term1;
+    varN->a->e->expr->e1->e1->t->t1->f = new Factor;
+    varN->a->e->expr->e1->e1->t->t1->f->con = new string("13");
 
     Stmt *varNS_Stmt = new Stmt;
     varNS_Stmt->statement = varNS;
     varNS_Stmt->type = 'v';
 
     VarInfo *info1 = new VarInfo;
-    info1->name = varN->id->i;
+    info1->defined = true;
+    info1->name = varN->a->i->i;
     info1->declaredLine = 22;
     info1->type = variableN->varType;
     table->addVarInfo(info1);
 
     variableN->v = varN;
-    variableN->type = 'i';
+    variableN->type = 'a';
     varNS->v = variableN;
     mainCompound->stmts->push_back(varNS_Stmt);
 
     Statement *varFirstS = new Statement;
     Var *varFirst = new Var;
-    varFirst->id = new Id;
-    varFirst->id->i = new string("first");
+    varFirst->a = new Assign;
+    varFirst->a->i = new Id;
+    varFirst->a->i->i = new string("first");
 
     Variable *variableFirst = new Variable;
     variableFirst->v = varFirst;
-    variableFirst->type = 'i';
+    variableFirst->type = 'a';
     variableFirst->varType = 'i';
+
+    varFirst->a->e = new Expression;
+    varFirst->a->e->expr = new Expr;
+    varFirst->a->e->type = 's';
+    varFirst->a->e->expr->e1 = new Simple;
+    varFirst->a->e->expr->e1->e1 = new Simple1;
+    varFirst->a->e->expr->e1->e1->t = new Term;
+    varFirst->a->e->expr->e1->e1->t->t1 = new Term1;
+    varFirst->a->e->expr->e1->e1->t->t1->f = new Factor;
+    varFirst->a->e->expr->e1->e1->t->t1->f->con = new string("25");
 
     Stmt *varFirstStmt = new Stmt;
     varFirstStmt->statement = varFirstS;
     varFirstStmt->type = 'v';
 
     VarInfo *info2 = new VarInfo;
-    info2->name = varFirst->id->i;
+    info2->defined = true;
+    info2->name = varFirst->a->i->i;
     info2->declaredLine = 24;
     info2->type = variableFirst->varType;
     table->addVarInfo(info2);
@@ -280,7 +233,7 @@ Program *getExampleTree1(SymbolTable *table) {
     paramExpr->e1->e1->t = new Term;
     paramExpr->e1->e1->t->t1 = new Term1;
     paramExpr->e1->e1->t->t1->f = new Factor;
-    paramExpr->e1->e1->t->t1->f->con = new string("enter the number of terms");
+    paramExpr->e1->e1->t->t1->f->con = new string("\"enter the number of terms\"");
 
     procCall->c->params->push_back(paramExpression);
     mainCompound->stmts->push_back(procCallStmt);

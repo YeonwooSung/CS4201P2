@@ -4,7 +4,7 @@
 
 int varNum = 0;
 int sectionNum = 0;
-const string VARNAME = "@TEMP_";
+const string VARNAME = "_TEMP_";
 const string SECTION_STR = "L";
 
 void generateTAC(SymbolTable *table, vector<Stmt *> *stmts, TACList *list);
@@ -585,24 +585,31 @@ void generateTAC_While(SymbolTable *table, While *w, TACList *list) {
     // TAC object for "L0:"
     TAC *label1 = new TAC();
     string *str1 = generateSectionNum();
+    string *str2 = generateSectionNum();
     label1->setA1(str1);
     label1->isStartOfSection = true;
     list->appendTAC(label1);
 
-    // TAC object for "If t Goto L0"
+    // TAC object for "If t Goto L1"
     TAC *tac_if = new TAC();
     tac_if->setA1(new string("If"));
     tac_if->setA2(new string(*(expression->getA1())));
     tac_if->hasGoto = true;
-    tac_if->setA3(new string(*(str1)));
+    tac_if->setA3(new string(*(str2)));
     list->appendTAC(tac_if);
 
-    // TAC object for "Goto L1"
+    // TAC object for "Goto L2"
     TAC *tac_goto = new TAC();
-    string *str2 = generateSectionNum();
-    tac_goto->setA1(new string(*(str2)));
+    string *str3 = generateSectionNum();
+    tac_goto->setA1(new string(*(str3)));
     tac_goto->hasGoto = true;
     list->appendTAC(tac_goto);
+
+    // TAC object for "L1:"
+    TAC *label2 = new TAC();
+    label2->setA1(str2);
+    label2->isStartOfSection = true;
+    list->appendTAC(label2);
 
     generateTAC(table, w->s1->stmts, list); //process statements in the While statement
 
@@ -612,11 +619,12 @@ void generateTAC_While(SymbolTable *table, While *w, TACList *list) {
     tac_goto->hasGoto = true;
     list->appendTAC(tac_goto);
 
-    // TAC object for "L1:"
-    TAC *label2 = new TAC();
-    label2->setA1(str2);
-    label2->isStartOfSection = true;
-    list->appendTAC(label2);
+    // TAC object for "L2:"
+    TAC *label3 = new TAC();
+    label3->setA1(str3);
+    label3->isStartOfSection = true;
+    list->appendTAC(label3);
+
 }
 
 /**
