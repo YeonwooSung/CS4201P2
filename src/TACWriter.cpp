@@ -49,7 +49,6 @@ string *generateTACString(TAC *tac) {
         return new string(*(a1) + ":");
     }
 
-
     /* check if pointer is null, and build the "three address code" string */
 
     str += "    ";
@@ -76,6 +75,16 @@ void writeTAC(TACList *tacList, ofstream &tacFile, string functionName) {
     // use for loop to iterate TAC instances in the list
     for (int i = 0; i < size; i++) {
         TAC *tac = list->at(i);
+
+        // check if the current tac makes a function call with standard print function
+        if (startsWith(*(tac->getA1()), "_Print")) {
+            tacFile << "    PushParam " << *(tac->getA2()) << ";\n";
+            tacFile << "    Call " << *(tac->getA1()) << ";\n";
+            tacFile << "    PopParams;\n";
+
+            continue;
+        }
+
         string *str = generateTACString(tac);
 
         // check if the returned string is null

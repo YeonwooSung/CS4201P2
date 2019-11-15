@@ -495,14 +495,16 @@ void generateTAC_If(SymbolTable *table, If *i, TACList *list) {
         } else {
             list->appendTAC(expression);
 
-            // TAC object for "If t Goto L0"
             string *str1 = generateSectionNum();
+            string *str2 = generateSectionNum();
+            string *str3 = generateSectionNum();
+
+            // TAC object for "If t Goto L0"
             tac->setA3(new string(*(str1)));
             list->appendTAC(tac);
 
             // TAC object for "Goto L1"
             tac = new TAC();
-            string *str2 = generateSectionNum();
             tac->setA1(new string(*(str2)));
             tac->hasGoto = true;
             list->appendTAC(tac);
@@ -515,6 +517,12 @@ void generateTAC_If(SymbolTable *table, If *i, TACList *list) {
 
             generateTAC(table, if2->s1->stmts, list); //process statements in the If statement
 
+            // TAC object for "Goto L2"
+            tac = new TAC();
+            tac->setA1(new string(*(str3)));
+            tac->hasGoto = true;
+            list->appendTAC(tac);
+
             // TAC object for "L1:"
             tac = new TAC();
             tac->setA1(str2);
@@ -522,6 +530,12 @@ void generateTAC_If(SymbolTable *table, If *i, TACList *list) {
             list->appendTAC(tac);
 
             generateTAC(table, if2->s2->stmts, list); //process statements in the else statement
+
+            // TAC object for "L2:"
+            tac = new TAC();
+            tac->setA1(str3);
+            tac->isStartOfSection = true;
+            list->appendTAC(tac);
         }
     } else {
         If1 *if1 = i->i->if1;
@@ -573,15 +587,6 @@ void generateTAC_While(SymbolTable *table, While *w, TACList *list) {
     expression->setA1(generateVarName());
     expression->hasAssign = true;
 
-    // check if the boolean expression of the while statement is valid
-    if (processExpression(table, w->e, list, expression)) {
-        delete expression;
-        return;
-    }
-
-    expression->setA1(generateVarName());
-    list->appendTAC(expression);
-
     // TAC object for "L0:"
     TAC *label1 = new TAC();
     string *str1 = generateSectionNum();
@@ -589,6 +594,16 @@ void generateTAC_While(SymbolTable *table, While *w, TACList *list) {
     label1->setA1(str1);
     label1->isStartOfSection = true;
     list->appendTAC(label1);
+
+    // check if the boolean expression of the while statement is valid
+    if (processExpression(table, w->e, list, expression)) {
+        delete expression;
+        //TODO remove label1
+        return;
+    }
+
+    expression->setA1(generateVarName());
+    list->appendTAC(expression);
 
     // TAC object for "If t Goto L1"
     TAC *tac_if = new TAC();
