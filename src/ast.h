@@ -249,3 +249,5 @@ bool checkScopeOfStmts(SymbolTable *table, vector<Stmt *> *stmts, vector<Variabl
 bool checkType(SymbolTable *table, vector<Stmt *> *stmts, vector<Procedure *> *procedures);
 TACList *generateTACList(SymbolTable *table, vector<Stmt *> *stmts);
 void writeTAC(vector<TACList *> list, vector<Procedure *> *procedures);
+bool startsWith(const string &s1, const string &s2);
+void generateHLA(vector<TACList *> list, vector<Procedure *> *procedures, string *programName);

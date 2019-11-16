@@ -96,9 +96,6 @@ void writeTAC(TACList *tacList, ofstream &tacFile, string functionName) {
 }
 
 void writeTAC(vector<TACList *> list, vector<Procedure *> *procedures) {
-    ofstream tacFile;
-    tacFile.open("tac.txt");
-
     int size = list.size();
 
     // check if the list is empty
@@ -114,6 +111,9 @@ void writeTAC(vector<TACList *> list, vector<Procedure *> *procedures) {
         cout << "     actual = " << procedures->size() << endl;
         return;
     }
+
+    ofstream tacFile;
+    tacFile.open("tac.txt");
 
     // iterate instances of the list of three address code
     for (int i = 1; i < size; i++) {
