@@ -232,8 +232,6 @@ bool processExpression(SymbolTable *table, Expression *expr, TACList *list, TAC 
             return true;
         }
 
-        tac1->setA1(generateVarName()); //set the first address with the temp name
-
         TAC *tac2 = new TAC();
         tac2->hasAssign = true;
 
@@ -244,18 +242,29 @@ bool processExpression(SymbolTable *table, Expression *expr, TACList *list, TAC 
             return true;
         }
 
-        tac2->setA1(generateVarName()); //set the first address with the temp name
+        if (tac1->getA3() != NULL) {
+            string *str = generateVarName();
+            tac1->setA1(new string(*(str))); //set the first address with the temp name
+            tac->setA2(str);
+            list->appendTAC(tac1); // append the TAC instaces to the list
+        } else {
+            string *str = new string(*(tac1->getA2()));
+            tac->setA2(str);
+            delete tac1; // free the allocated memory
+        }
 
-        // append the TAC instaces to the list
-        list->appendTAC(tac1);
-        list->appendTAC(tac2);
+        if (tac2->getA3() != NULL) {
+            string *str = generateVarName();
+            tac2->setA1(new string(*(str)));   //set the first address with the temp name
+            tac->setA3(str);
+            list->appendTAC(tac2); // append the TAC instaces to the list
+        } else {
+            string *str = new string(*(tac2->getA2()));
+            tac->setA3(str);
+            delete tac2; // free the allocated memory
+        }
 
-        string *str1 = new string(*(tac1->getA1()));
-        string *str2 = new string(*(tac2->getA1()));
         RelOp relop = *(e->op);
-
-        tac->setA2(str1);
-        tac->setA3(str2);
 
         switch(relop) {
             case Eq:
@@ -584,7 +593,6 @@ void generateTAC_If(SymbolTable *table, If *i, TACList *list) {
  */
 void generateTAC_While(SymbolTable *table, While *w, TACList *list) {
     TAC *expression = new TAC();
-    expression->setA1(generateVarName());
     expression->hasAssign = true;
 
     // TAC object for "L0:"
@@ -598,7 +606,12 @@ void generateTAC_While(SymbolTable *table, While *w, TACList *list) {
     // check if the boolean expression of the while statement is valid
     if (processExpression(table, w->e, list, expression)) {
         delete expression;
-        //TODO remove label1
+
+        // remove label1 from the list, and delete the instance by calling the destructor
+        vector<TAC *> *tacVector = list->getList();
+        tacVector->pop_back();
+        delete label1;
+
         return;
     }
 
