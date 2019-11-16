@@ -154,14 +154,7 @@ void writeHLA(TACList *tacList, ofstream &hlaFile) {
 
         // check if the current tac makes a function call with standard print function
         if (startsWith(*(tac->getA1()), "_Print")) {
-            if (tac->getA1()->compare("_PrintInt") == 0) {
-                //TODO
-            } else if (tac->getA1()->compare("_PrintString") == 0) {
-                //TODO
-            } else if (tac->getA1()->compare("_PrintBool") == 0) {
-                //TODO
-            }
-
+            hlaFile << "    stdout.put(" << *(tac->getA2()) << " , nl);\n";
             continue;
         }
 
@@ -175,7 +168,81 @@ void writeHLA(TACList *tacList, ofstream &hlaFile) {
     }
 }
 
-void generateHLA(vector<TACList *> list, vector<Procedure *> *procedures, string *programName) {
+/**
+ * Print out the parameters of the procedure.
+ * @param {params} list of parameters
+ * @param {size} the size of the list
+ * @param {hlaFile} the file output stream
+ */
+void writeParamsOfProcedure(vector<Variable *> *params, int size, ofstream &hlaFile) {
+    int lastIndex = size - 1;
+
+    for (int i = 0; i < size; i++) {
+        Variable *var = params->at(i);
+        string str = "";
+
+        if (var->type != 'i') {
+            str += *(var->v->a->i->i);
+        } else {
+            str += *(var->v->id->i);
+        }
+
+        str += " : ";
+
+        if (var->varType == 'i') {
+            str += "int32";
+        } else if (var->varType == 'b') {
+            str += "boolean";
+        } else {
+            str += "string";
+        }
+
+        // check if the current index is the final index - if so, add semi colon to the string.
+        if (i != lastIndex ) {
+            str += "; ";
+        } else {
+            str += " ";
+        }
+
+        hlaFile << str;
+    }
+}
+
+void generateVariableSection(SymbolTable *table, ofstream &hlaFile) {
+    vector<VarInfo *> *list = table->getList();
+    int size = list->size();
+
+    if (size == 0) return;
+
+    hlaFile << "var\n";
+
+    // use for loop to iterate VarInfo instances in the symbol table
+    for (int i = 0; i < size; i++) {
+        VarInfo *info = list->at(i);
+
+        string *name = info->name;
+        char type = info->type;
+
+        hlaFile << "    " << *name << ":";
+
+        if (type == 'i') {
+            hlaFile << "int32\n";
+        } else if (type == 'b') {
+            hlaFile << "boolean\n";
+        } else {
+            hlaFile << "string\n";
+        }
+    }
+}
+
+/**
+ * Generates the HLA file by parsing the TACs.
+ * @param {list} the list of TAC instances
+ * @param {procedures} the list of procedures
+ * @param {programName} the name of the program
+ * @param {table} the symbol table
+ */
+void generateHLA(vector<TACList *> list, vector<Procedure *> *procedures, string *programName, SymbolTable *table) {
     int size = list.size();
 
     // check if the list is empty
@@ -201,11 +268,26 @@ void generateHLA(vector<TACList *> list, vector<Procedure *> *procedures, string
     // iterate instances of the list of three address code
     for (int i = 1; i < size; i++) {
         TACList *tacList = list.at(i);
-        string *name = procedures->at(i - 1)->name;
+        Procedure *p = procedures->at(i - 1);
+        string *name = p->name;
 
         /* write HLA codes via file output stream */
 
-        hlaFile << "procedure " << *(name) << ";  @noframe\n";
+        hlaFile << "procedure " << *(name);
+
+        // get the list of parameters of the procedure
+        vector<Variable *> *params = p->params;
+        int size = params->size();
+
+        // check if the procedure has parameters
+        if (size != 0) {
+            hlaFile << " ( ";
+            writeParamsOfProcedure(params, size, hlaFile); // write HLA code for parameters of procedure
+            hlaFile << ")";
+        }
+
+        hlaFile << ";  @noframe\n";
+
         hlaFile << "begin " << *(name) << ";\n\n";
 
         writeHLA(tacList, hlaFile); // generate HLA for procedures
@@ -215,6 +297,9 @@ void generateHLA(vector<TACList *> list, vector<Procedure *> *procedures, string
 
     // start writing HLA codes for main function
     hlaFile << "procedure main;  @noframe\n";
+
+    generateVariableSection(table, hlaFile); //generate HLA codes for var section
+
     hlaFile << "begin main;\n";
 
     TACList *mainList = list.at(0); //get the TACList for main function

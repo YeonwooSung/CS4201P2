@@ -87,8 +87,8 @@ int main() {
     // write three address code file
     writeTAC(list, procedures);
 
-    //TODO part4
-    generateHLA(list, procedures, program->name);
+    // generate HLA codes
+    generateHLA(list, procedures, program->name, table);
 
     delete table;
     std::cout << "Program ends" << std::endl;
