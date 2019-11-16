@@ -88,6 +88,7 @@ int main() {
     writeTAC(list, procedures);
 
     //TODO part4
+    generateHLA(list, procedures, program->name);
 
     delete table;
     std::cout << "Program ends" << std::endl;

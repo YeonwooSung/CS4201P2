@@ -15,6 +15,7 @@ Program *getExampleTree_error1(SymbolTable *table) {
 
 Program *getExampleTree1(SymbolTable *table) {
     Program *p = new Program;
+    p->name = new string("Example1");
     p->ps = new vector<Procedure *>;
 
     Procedure *proc = new Procedure;
