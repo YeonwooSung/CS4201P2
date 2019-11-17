@@ -3,6 +3,16 @@
 #include <fstream>
 
 
+int branchNum = 0;
+const string BRANCH_SECTION_STR = "L_TEMP";
+
+string *generateBranchSectionNum() {
+    string name = BRANCH_SECTION_STR + std::to_string(branchNum);
+    branchNum += 1;
+    string *str = new string(name);
+    return str;
+}
+
 /**
  * Generate HLA string for basic operations.
  * @param {a1} operand 1
@@ -50,6 +60,39 @@ string *generateHLAString_DivOp(string *a1, string *a2, string *a3) {
     return new string(str);
 }
 
+string *generateHLA_CompareAndJump(string *a1, string *a2, string *a3, string op) {
+    string str = "    mov(";
+    str += *a2;
+    str += ", eax);\n    mov(";
+    str += *a3;
+    str += ", ebx);\n    cmp(eax, ebx);\n    ";
+
+    str += op; // > = jg,  < = jl, >= = jge, <= = jle, == = je, != = jne
+
+    string *section1 = generateBranchSectionNum();
+    string *section2 = generateBranchSectionNum();
+    string *section3 = generateBranchSectionNum();
+
+    str += (" " + *section1);
+    str += ("\n    jmp " + *section2);
+    str += "\n";
+    str += *section1;
+    str += ":\n    mov(1, ";
+    str += *a1;
+    str += ");\n    jmp ";
+    str += *section3;
+    str += "\n";
+    str += (*section2 + ":\n    mov(0, ");
+    str += *a1;
+    str += ");\n    jmp ";
+    str += *section3;
+    str += "\n";
+    str += *section3;
+    str += ":\n";
+
+    return new string(str);
+}
+
 /**
  * Generate HLA codes by parsing the TAC instance.
  * @param {tac} Three Address Code
@@ -75,16 +118,16 @@ string *generateHLAString(TAC *tac) {
             str += "mov(";
             str += "0 , eax);\n    cmp(eax, ";
             str += *a2;
-            str += ");\n    jne( ";
+            str += ");\n    jne ";
             str += *a3;
-            str += " );\n";
+            str += ";\n";
 
             return new string(str);
         }
 
-        str += "jmp(";
+        str += "jmp ";
         str += *(a1);
-        str += ");\n";
+        str += ";\n";
 
         return new string(str);
     }
@@ -97,17 +140,23 @@ string *generateHLAString(TAC *tac) {
     // check if the TAC has an operator.
     if (op != NULL) {
         if (op->compare(">") == 0) {
-            //TODO
+            return generateHLA_CompareAndJump(a1, a2, a3, "jg"); //generate HLA for '>'
+
         } else if (op->compare(">=") == 0) {
-            //TODO
+            return generateHLA_CompareAndJump(a1, a2, a3, "jge"); //generate HLA for '>='
+
         } else if (op->compare("<") == 0) {
-            //TODO
+            return generateHLA_CompareAndJump(a1, a2, a3, "jl"); //generate HLA for '<'
+
         } else if (op->compare("<=") == 0) {
-            //TODO
+            return generateHLA_CompareAndJump(a1, a2, a3, "jle"); //generate HLA for '<='
+
         } else if (op->compare("!=") == 0) {
-            //TODO
+            return generateHLA_CompareAndJump(a1, a2, a3, "jne"); //generate HLA for '!='
+
         } else if (op->compare("==") == 0) {
-            //TODO
+            return generateHLA_CompareAndJump(a1, a2, a3, "je"); //generate HLA for '=='
+
         } else if (op->compare("+") == 0) {
             return generateHLAString_Op(a1, a2, a3, "add"); //generate HLA for '+'
 
@@ -138,10 +187,35 @@ string *generateHLAString(TAC *tac) {
         str += *a1;
         str += ");\n";
     } else {
-        //TODO
+        // check if this tac is for function call
+        if (a1->compare("Call") == 0) {
+            str += "    ";
+            str += (*a2 + "();\n");
+        } else {
+            return NULL;
+        }
     }
 
     return new string(str);
+}
+
+void writeHLA_Call(string *functionName, vector<string> &params, ofstream &hlaFile) {
+    hlaFile << "    ";
+    hlaFile << *functionName;
+    hlaFile << "(";
+
+    int size = params.size();
+    int lastIndex = size - 1;
+
+    for (int i = 0; i < size; i++) {
+        hlaFile << params.at(i);
+
+        if (i != lastIndex) {
+            hlaFile << ", ";
+        }
+    }
+
+    hlaFile << ");\n";
 }
 
 void writeHLA(TACList *tacList, ofstream &hlaFile) {
@@ -158,7 +232,33 @@ void writeHLA(TACList *tacList, ofstream &hlaFile) {
             continue;
         }
 
-        string *str = generateHLAString(tac);
+        // check if current tac is for "PushParam", which pushes the parameter to the stack for the function call
+        if (tac->getA1()->compare("PushParam") == 0) {
+            vector<string> params;
+
+            params.push_back(*(tac->getA2())); //add param string to vector
+            i += 1; //increase the value of i to parse the next tac instance
+
+            // use for loop to iterate tac instances
+            for (; i < size; i++) {
+                tac = list->at(i);
+                string *a1 = tac->getA1();
+
+                // check if the current TAC is for either function call or PushParam
+                if (a1->compare("Call") == 0) {
+                    writeHLA_Call(tac->getA2(), params, hlaFile);
+                    break;
+                } else if (a1->compare("PushParam") == 0) {
+                    params.push_back(*(tac->getA2()));
+                } else {
+                    break;
+                }
+            }
+
+            continue;
+        }
+
+        string *str = generateHLAString(tac); //generate HLA code
 
         // check if the returned string is null
         if (str != NULL) {
