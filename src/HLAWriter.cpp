@@ -6,6 +6,12 @@
 int branchNum = 0;
 const string BRANCH_SECTION_STR = "L_TEMP";
 
+/**
+ * This function generates the section label for the branching.
+ * When the HLA jumps for the branching, it requires the label name of the target section.
+ * And this is the function that generates that label name for the branching.
+ * @return The generated label.
+ */
 string *generateBranchSectionNum() {
     string name = BRANCH_SECTION_STR + std::to_string(branchNum);
     branchNum += 1;
@@ -20,7 +26,10 @@ string *generateBranchSectionNum() {
  * @param {a3} operand 3
  * @param {op} operator
  * 
+ * a1 = a2 op a3
+ *
  * i.e. a1 = a2 + a3
+ * i.e. a1 = a2 || a3
  * 
  * @return HLA string for basic operations.
  */
@@ -60,6 +69,14 @@ string *generateHLAString_DivOp(string *a1, string *a2, string *a3) {
     return new string(str);
 }
 
+/**
+ * This function generates HLA codes for branching.
+ * For the conditional operators (>, >=, <, <=, ==, !=) we could either use conditional
+ * instructions (i.e. setle, setge, etc) or branching.
+ * It might be easier to use conditional instructions for the conditional operators.
+ * However, I decided to use branching to implement the conditional operators, since this is more
+ * challenging one.
+ */
 string *generateHLA_CompareAndJump(string *a1, string *a2, string *a3, string op) {
     string str = "    mov(";
     str += *a2;
@@ -67,7 +84,7 @@ string *generateHLA_CompareAndJump(string *a1, string *a2, string *a3, string op
     str += *a3;
     str += ", ebx);\n    cmp(eax, ebx);\n    ";
 
-    str += op; // > = jg,  < = jl, >= = jge, <= = jle, == = je, != = jne
+    str += op; // jg for >, jl for <, jge for >=, jle for <=, je for ==, jne for !=
 
     string *section1 = generateBranchSectionNum();
     string *section2 = generateBranchSectionNum();
@@ -180,7 +197,10 @@ string *generateHLAString(TAC *tac) {
         }
     }
 
-    if (tac->hasAssign) { //check if the TAC contains the assignment
+    if (a1->compare("Return")) { // check if the TAC contains the return statement
+        //TODO
+
+    } else if (tac->hasAssign) { //check if the TAC contains the assignment
         str += "    mov(";
         str += *a2;
         str += ", ";
@@ -199,6 +219,12 @@ string *generateHLAString(TAC *tac) {
     return new string(str);
 }
 
+/**
+ * This method writes the HLA codes via file output stream.
+ * @param {functionName} the name of the function
+ * @param {params} the list of parameters
+ * @param {hlaFile} the instance for the file output stream
+ */
 void writeHLA_Call(string *functionName, vector<string> &params, ofstream &hlaFile) {
     hlaFile << "    ";
     hlaFile << *functionName;
@@ -207,8 +233,9 @@ void writeHLA_Call(string *functionName, vector<string> &params, ofstream &hlaFi
     int size = params.size();
     int lastIndex = size - 1;
 
+    // use for loop to iterate parameters in the list
     for (int i = 0; i < size; i++) {
-        hlaFile << params.at(i);
+        hlaFile << params.at(i); //print out the parameter via file output stream
 
         if (i != lastIndex) {
             hlaFile << ", ";
@@ -218,6 +245,11 @@ void writeHLA_Call(string *functionName, vector<string> &params, ofstream &hlaFi
     hlaFile << ");\n";
 }
 
+/**
+ * The aim of this function is to write the HLA codes via file output stream.
+ * @param {tacList} the instance that contains TAC instances
+ * @param {hlaFile} the file output stream
+ */
 void writeHLA(TACList *tacList, ofstream &hlaFile) {
     vector<TAC *> *list = tacList->getList();
     int size = list->size();
@@ -289,6 +321,7 @@ void writeParamsOfProcedure(vector<Variable *> *params, int size, ofstream &hlaF
 
         str += " : ";
 
+        // check the type of the variable
         if (var->varType == 'i') {
             str += "int32";
         } else if (var->varType == 'b') {
@@ -308,11 +341,25 @@ void writeParamsOfProcedure(vector<Variable *> *params, int size, ofstream &hlaF
     }
 }
 
+/**
+ * The aim of this function is to write the "var" section for the procedures.
+ * According to the quick guide of the High Level Assembly, the procedure in the HLA
+ * has a section called "var", which allows the programmers to declare the local variables.
+ * Therefore, I made this function to generate "var" section for the procedures.
+ *
+ * The main reason that this function requires symbol table is to check the type of the variable,
+ * so that this function could print out the suitable type name to the var section.
+ *
+ * @param {table} the symbol table
+ * @param {hlaFile} file output stream
+ */
 void generateVariableSection(SymbolTable *table, ofstream &hlaFile) {
     vector<VarInfo *> *list = table->getList();
     int size = list->size();
 
-    if (size == 0) return;
+    if (size == 0) return; //if there is no variables in the symbol table, end up the function
+
+    /* write a HLA codes for the var section */
 
     hlaFile << "var\n";
 
@@ -323,7 +370,7 @@ void generateVariableSection(SymbolTable *table, ofstream &hlaFile) {
         string *name = info->name;
         char type = info->type;
 
-        hlaFile << "    " << *name << ":";
+        hlaFile << "    " << *name << " : ";
 
         if (type == 'i') {
             hlaFile << "int32\n";
@@ -360,7 +407,7 @@ void generateHLA(vector<TACList *> list, vector<Procedure *> *procedures, string
     }
 
     ofstream hlaFile;
-    hlaFile.open("hla.txt");
+    hlaFile.open("hla.txt"); //open the file output stream
 
     // write program name and include statement to the HLA file
     hlaFile << "program " << *(programName) << ";\nbegin " << *(programName) << ";\n\n#include( \"stdlib.hhf\" );\n\n";
@@ -387,19 +434,13 @@ void generateHLA(vector<TACList *> list, vector<Procedure *> *procedures, string
         }
 
         hlaFile << ";  @noframe\n";
-
         hlaFile << "begin " << *(name) << ";\n\n";
-
         writeHLA(tacList, hlaFile); // generate HLA for procedures
-
         hlaFile << "\nend " << *(name) << ";\n";
     }
 
-    // start writing HLA codes for main function
-    hlaFile << "procedure main;  @noframe\n";
-
+    hlaFile << "procedure main;  @noframe\n"; // start writing HLA codes for main function
     generateVariableSection(table, hlaFile); //generate HLA codes for var section
-
     hlaFile << "begin main;\n";
 
     TACList *mainList = list.at(0); //get the TACList for main function

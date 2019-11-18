@@ -4,9 +4,9 @@
 
 int main() {
     SymbolTable *table = new SymbolTable();
-    //Program *program = getExampleTree(table); //get the AST
+    Program *program = getExampleTree(table); //get the AST
     //Program *program = getExampleTree_error1(table); //get the AST that has semantic error in it (variable scoping issue)
-    Program *program = getExampleTree_error2(table); //get the AST that has type error (integer + boolean)
+    //Program *program = getExampleTree_error2(table); //get the AST that has type error (integer + boolean)
 
     // run the semantic analysis
     if (!checkScopeOfAllProcedures(table, program->ps) || !checkScopeOfStmts(table, program->cs->stmts, NULL, program->cs->startLine, program->cs->endLine)) {
