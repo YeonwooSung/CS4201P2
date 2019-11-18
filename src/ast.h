@@ -245,6 +245,7 @@ public:
 
 Program *getExampleTree(SymbolTable *table);
 Program *getExampleTree_error1(SymbolTable *table);
+Program *getExampleTree_error2(SymbolTable *table);
 bool checkScopeOfAllProcedures(SymbolTable *table, vector<Procedure *> *procs);
 bool checkScopeOfStmts(SymbolTable *table, vector<Stmt *> *stmts, vector<Variable *> *params, int startLine, int endLine);
 bool checkType(SymbolTable *table, vector<Stmt *> *stmts, vector<Procedure *> *procedures);

@@ -236,6 +236,7 @@ bool checkType(SymbolTable *table, Simple *s) {
         }
 
         if (type1 == 0) {
+
             if (*addop != Or) {
                 return (type2 == 'i');
             } else {
@@ -256,9 +257,9 @@ bool checkType(SymbolTable *table, Simple *s) {
             checker = false;
         } else {
             if (*addop != Or) {
-                checker = (type1 = 'i');
+                checker = (type1 == 'i');
             } else {
-                checker = (type1 = 'b');
+                checker = (type1 == 'b');
             }
         }
     }
@@ -395,7 +396,7 @@ bool checkType(SymbolTable *table, vector<Stmt *> *stmts, vector<Procedure *> *p
     // use for loop to iterate statements in the vector
     for (int i = 0; i < size; i++) {
         Stmt *stmt = stmts->at(i);
-        checkType(table, stmt, procedures);
+        checker = checker && checkType(table, stmt, procedures);
     }
 
     return checker;

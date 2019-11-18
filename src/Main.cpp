@@ -4,9 +4,9 @@
 
 int main() {
     SymbolTable *table = new SymbolTable();
-    Program *program = getExampleTree(table); //get the AST
-    //Program *program = getExampleTree_error1(table); //get the AST that has semantic error in it (variable scoping issue)
     //Program *program = getExampleTree(table); //get the AST
+    //Program *program = getExampleTree_error1(table); //get the AST that has semantic error in it (variable scoping issue)
+    Program *program = getExampleTree_error2(table); //get the AST that has type error (integer + boolean)
 
     // run the semantic analysis
     if (!checkScopeOfAllProcedures(table, program->ps) || !checkScopeOfStmts(table, program->cs->stmts, NULL, program->cs->startLine, program->cs->endLine)) {
@@ -18,7 +18,7 @@ int main() {
 
     // run the type checking
     if (!checkType(table, program->cs->stmts, procedures)) {
-        std::cerr << "Error::Type checking failed - Main method" << std::endl;
+        std::cerr << "Error::Type checking failed - Type error found in the function \"main\"" << std::endl;
         return 0;
     }
 
@@ -54,7 +54,7 @@ int main() {
 
         // run the type checker for each procedure
         if (!checkType(table, p->cs->stmts, procedures)) {
-            std::cerr << "Error::Type checking failed - " << *(p->name) << std::endl;
+            std::cerr << "Error::Type checking failed - Type error found in the function \"" << *(p->name) << "\"" << std::endl;
             return 0;
         }
 

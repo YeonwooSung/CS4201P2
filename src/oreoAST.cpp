@@ -133,20 +133,152 @@ Program *getExampleTree_error1(SymbolTable *table) {
 
     varFirstS->v = variableFirst;
     mainCompound->stmts->push_back(varFirstStmt);
+    mainCompound->startLine = 19;
+    mainCompound->endLine = 52;
 
     p->cs = mainCompound;
 
     return p;
 }
 
-Program *getExampleTree() {
+Program *getExampleTree_error2(SymbolTable *table) {
     Program *p = new Program;
     p->name = new string("TypeErrorExample");
     p->ps = new vector<Procedure *>;
 
-    //
+    // main function
+    Compound *mainCompound = new Compound;
+    mainCompound->stmts = new vector<Stmt *>;
 
-    return NULL;
+    // variable declarations
+    Statement *varNS = new Statement;
+    Variable *variableN = new Variable;
+    variableN->varType = 'i';
+    Var *varN = new Var;
+    varN->a = new Assign;
+    varN->a->e = new Expression;
+    varN->a->i = new Id;
+    varN->a->i->i = new string("n");
+
+    varN->a->e = new Expression;
+    varN->a->e->expr = new Expr;
+    varN->a->e->type = 's';
+    varN->a->e->expr->e1 = new Simple;
+    varN->a->e->expr->e1->e1 = new Simple1;
+    varN->a->e->expr->e1->e1->t = new Term;
+    varN->a->e->expr->e1->e1->t->t1 = new Term1;
+    varN->a->e->expr->e1->e1->t->t1->f = new Factor;
+    varN->a->e->expr->e1->e1->t->t1->f->con = new string("13");
+
+    Stmt *varNS_Stmt = new Stmt;
+    varNS_Stmt->statement = varNS;
+    varNS_Stmt->type = 'v';
+
+    VarInfo *info1 = new VarInfo;
+    info1->defined = true;
+    info1->name = varN->a->i->i;
+    info1->declaredLine = 22;
+    info1->type = variableN->varType;
+    table->addVarInfo(info1);
+
+    variableN->v = varN;
+    variableN->type = 'a';
+    varNS->v = variableN;
+    mainCompound->stmts->push_back(varNS_Stmt);
+
+    Statement *varFirstS = new Statement;
+    Var *varFirst = new Var;
+    varFirst->a = new Assign;
+    varFirst->a->i = new Id;
+    varFirst->a->i->i = new string("first");
+
+    Variable *variableFirst = new Variable;
+    variableFirst->v = varFirst;
+    variableFirst->type = 'a';
+    variableFirst->varType = 'i';
+
+    varFirst->a->e = new Expression;
+    varFirst->a->e->expr = new Expr;
+    varFirst->a->e->type = 's';
+    varFirst->a->e->expr->e1 = new Simple;
+    varFirst->a->e->expr->e1->e1 = new Simple1;
+    varFirst->a->e->expr->e1->e1->t = new Term;
+    varFirst->a->e->expr->e1->e1->t->t1 = new Term1;
+    varFirst->a->e->expr->e1->e1->t->t1->f = new Factor;
+    varFirst->a->e->expr->e1->e1->t->t1->f->con = new string("25");
+
+    Stmt *varFirstStmt = new Stmt;
+    varFirstStmt->statement = varFirstS;
+    varFirstStmt->type = 'v';
+
+    VarInfo *info2 = new VarInfo;
+    info2->defined = true;
+    info2->name = varFirst->a->i->i;
+    info2->declaredLine = 24;
+    info2->type = variableFirst->varType;
+    table->addVarInfo(info2);
+
+    varFirstS->v = variableFirst;
+    mainCompound->stmts->push_back(varFirstStmt);
+
+    Statement *varCS = new Statement;
+    Id *varC = new Id;
+    varC->i = new string("c");
+
+    Variable *variableC = new Variable;
+    variableC->v = new Var;
+    variableC->type = 'i';
+    variableC->v->id = varC;
+
+    varCS->v = variableC;
+
+    VarInfo *infoC = new VarInfo;
+    infoC->declaredLine = 28;
+    infoC->name = varC->i;
+    table->addVarInfo(infoC);
+
+    Stmt *varCStmt = new Stmt;
+    varCStmt->statement = varCS;
+    varCStmt->type = 'v';
+
+    //-------------------------------------------------------------
+    // invalid statement -> type error (integer + boolean)
+    Statement *assign = new Statement;
+    assign->a = new Assign;
+    assign->a->i = new Id;
+    assign->a->i->i = new string("c");
+
+    assign->a->e = new Expression;
+    assign->a->e->expr = new Expr;
+    assign->a->e->type = 's';
+    assign->a->e->expr->e1 = new Simple;
+    assign->a->e->expr->e1->e2 = new Simple2;
+    assign->a->e->expr->e1->e2->op = new AddOp(Plus);
+    assign->a->e->expr->e1->e2->t1 = new Term;
+    assign->a->e->expr->e1->e2->t1->t1 = new Term1;
+    assign->a->e->expr->e1->e2->t1->t1->f = new Factor;
+    assign->a->e->expr->e1->e2->t1->t1->f->id = new Id;
+    assign->a->e->expr->e1->e2->t1->t1->f->id->i = new string("first");
+
+    assign->a->e->expr->e1->e2->t2 = new Term;
+    assign->a->e->expr->e1->e2->t2->t1 = new Term1;
+    assign->a->e->expr->e1->e2->t2->t1->f = new Factor;
+    assign->a->e->expr->e1->e2->t2->t1->f->con = new string("True");
+
+    Stmt *assignStmt = new Stmt;
+    assignStmt->statement = assign;
+    assignStmt->type = 'a';
+
+    mainCompound->stmts->push_back(assignStmt);
+
+    infoC->type = 'i';
+    //-------------------------------------------------------------
+
+    mainCompound->startLine = 19;
+    mainCompound->endLine = 52;
+    p->cs = mainCompound;
+
+    return p;
 }
 
 Program *getExampleTree(SymbolTable *table) {
