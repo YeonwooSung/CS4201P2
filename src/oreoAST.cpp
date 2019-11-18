@@ -6,14 +6,150 @@ using namespace std;
 
 Program *getExampleTree_error1(SymbolTable *table) {
     Program *p = new Program;
+    p->name = new string("SemanticErrorExample");
     p->ps = new vector<Procedure *>;
 
+    Procedure *proc = new Procedure;
+    string *procName = new string("printst");
+
+    vector<Variable *> *procParams = new vector<Variable *>;
+    Variable *procParameter = new Variable;
+    Var *procParam = new Var;
+    procParam->id = new Id;
+    procParam->id->i = new string("str");
+    procParameter->type = 'i';
+    procParameter->v = procParam;
+    procParameter->varType = 's';
+    procParams->push_back(procParameter);
+
+    proc->name = procName;
+    proc->params = procParams;
+    proc->startLine = 5;
+    proc->endLine = 17;
+
+    Compound *procCompound = new Compound;
+    proc->cs = procCompound;
+
+    vector<Stmt *> *procStatements = new vector<Stmt *>;
+    procCompound->stmts = procStatements;
+
+    Statement *procStatement = new Statement;
+    procStatement->p = new Print;
+    procStatement->p->s = new string("str");
+
+    Stmt *procStmt = new Stmt;
+    procStmt->statement = procStatement;
+    procStmt->type = 'p';
+
+    procStatements->push_back(procStmt);
+
+    //-------------------------------------------------------------
+    // invalid statement -> semantic error (variable scope error)
+    Statement *procStatement2 = new Statement;
+    procStatement2->g = new Get;
+    procStatement2->g->id = new Id;
+    procStatement2->g->id->i = new string("n");
+    Stmt *procStmt2 = new Stmt;
+    procStmt2->statement = procStatement2;
+    procStmt2->type = 'g';
+    procStatements->push_back(procStmt2);
+    //-------------------------------------------------------------
+
+
+    p->ps->push_back(proc);
     //TODO
+
+    // main function
+    Compound *mainCompound = new Compound;
+    mainCompound->stmts = new vector<Stmt *>;
+
+    // variable declarations
+    Statement *varNS = new Statement;
+    Variable *variableN = new Variable;
+    variableN->varType = 'i';
+    Var *varN = new Var;
+    varN->a = new Assign;
+    varN->a->e = new Expression;
+    varN->a->i = new Id;
+    varN->a->i->i = new string("n");
+
+    varN->a->e = new Expression;
+    varN->a->e->expr = new Expr;
+    varN->a->e->type = 's';
+    varN->a->e->expr->e1 = new Simple;
+    varN->a->e->expr->e1->e1 = new Simple1;
+    varN->a->e->expr->e1->e1->t = new Term;
+    varN->a->e->expr->e1->e1->t->t1 = new Term1;
+    varN->a->e->expr->e1->e1->t->t1->f = new Factor;
+    varN->a->e->expr->e1->e1->t->t1->f->con = new string("13");
+
+    Stmt *varNS_Stmt = new Stmt;
+    varNS_Stmt->statement = varNS;
+    varNS_Stmt->type = 'v';
+
+    VarInfo *info1 = new VarInfo;
+    info1->defined = true;
+    info1->name = varN->a->i->i;
+    info1->declaredLine = 22;
+    info1->type = variableN->varType;
+    table->addVarInfo(info1);
+
+    variableN->v = varN;
+    variableN->type = 'a';
+    varNS->v = variableN;
+    mainCompound->stmts->push_back(varNS_Stmt);
+
+    Statement *varFirstS = new Statement;
+    Var *varFirst = new Var;
+    varFirst->a = new Assign;
+    varFirst->a->i = new Id;
+    varFirst->a->i->i = new string("first");
+
+    Variable *variableFirst = new Variable;
+    variableFirst->v = varFirst;
+    variableFirst->type = 'a';
+    variableFirst->varType = 'i';
+
+    varFirst->a->e = new Expression;
+    varFirst->a->e->expr = new Expr;
+    varFirst->a->e->type = 's';
+    varFirst->a->e->expr->e1 = new Simple;
+    varFirst->a->e->expr->e1->e1 = new Simple1;
+    varFirst->a->e->expr->e1->e1->t = new Term;
+    varFirst->a->e->expr->e1->e1->t->t1 = new Term1;
+    varFirst->a->e->expr->e1->e1->t->t1->f = new Factor;
+    varFirst->a->e->expr->e1->e1->t->t1->f->con = new string("25");
+
+    Stmt *varFirstStmt = new Stmt;
+    varFirstStmt->statement = varFirstS;
+    varFirstStmt->type = 'v';
+
+    VarInfo *info2 = new VarInfo;
+    info2->defined = true;
+    info2->name = varFirst->a->i->i;
+    info2->declaredLine = 24;
+    info2->type = variableFirst->varType;
+    table->addVarInfo(info2);
+
+    varFirstS->v = variableFirst;
+    mainCompound->stmts->push_back(varFirstStmt);
+
+    p->cs = mainCompound;
+
+    return p;
+}
+
+Program *getExampleTree() {
+    Program *p = new Program;
+    p->name = new string("TypeErrorExample");
+    p->ps = new vector<Procedure *>;
+
+    //
 
     return NULL;
 }
 
-Program *getExampleTree1(SymbolTable *table) {
+Program *getExampleTree(SymbolTable *table) {
     Program *p = new Program;
     p->name = new string("Example1");
     p->ps = new vector<Procedure *>;
