@@ -55,9 +55,7 @@ Program *getExampleTree_error1(SymbolTable *table) {
     procStatements->push_back(procStmt2);
     //-------------------------------------------------------------
 
-
-    p->ps->push_back(proc);
-    //TODO
+    p->ps->push_back(proc); //add the procedure to the list
 
     // main function
     Compound *mainCompound = new Compound;

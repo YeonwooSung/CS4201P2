@@ -13,9 +13,9 @@ const string BRANCH_SECTION_STR = "L_TEMP";
  * @return The generated label.
  */
 string *generateBranchSectionNum() {
-    string name = BRANCH_SECTION_STR + std::to_string(branchNum);
-    branchNum += 1;
-    string *str = new string(name);
+    string name = BRANCH_SECTION_STR + std::to_string(branchNum); //generate label name
+    branchNum += 1; //increase the label number
+    string *str = new string(name); //allocate memory
     return str;
 }
 
@@ -86,9 +86,30 @@ string *generateHLA_CompareAndJump(string *a1, string *a2, string *a3, string op
 
     str += op; // jg for >, jl for <, jge for >=, jle for <=, je for ==, jne for !=
 
-    string *section1 = generateBranchSectionNum();
-    string *section2 = generateBranchSectionNum();
-    string *section3 = generateBranchSectionNum();
+    /*
+     * The conditional branching method that I implemented requires 3 labels.
+     * I used the three address code to check if the given conditional operation is true.
+     * So, by using the branching with 3 labels, we could set the suitable boolean value to the
+     * first variable of the three address code.
+     *
+     * i.e. a = b > c
+     *
+     * cmp b c
+     * jg L0
+     * jmp L1
+     * 
+     * L0: mov true a
+     * jmp L2
+     * 
+     * L1: mov false a
+     * jmp L2
+     * 
+     * L2:
+     */
+
+    string *section1 = generateBranchSectionNum(); //generate the label for L0
+    string *section2 = generateBranchSectionNum(); //generate the label for L1
+    string *section3 = generateBranchSectionNum(); //generate the label for L2
 
     str += (" " + *section1);
     str += ("\n    jmp " + *section2);
@@ -156,6 +177,9 @@ string *generateHLAString(TAC *tac) {
 
     // check if the TAC has an operator.
     if (op != NULL) {
+
+        /* Use the if-else statement to find the operator, and execute the corresponding function */
+
         if (op->compare(">") == 0) {
             return generateHLA_CompareAndJump(a1, a2, a3, "jg"); //generate HLA for '>'
 
@@ -197,8 +221,21 @@ string *generateHLAString(TAC *tac) {
         }
     }
 
-    if (a1->compare("Return")) { // check if the TAC contains the return statement
-        //TODO
+    if (a1->compare("Return") == 0) { // check if the TAC contains the return statement
+        /*
+         * The HLA provides 2 different ways for return statement.
+         * 1) use ret() function
+         * 2) use @returns("text") annotation to specify the register that contains the return value.
+         *
+         * To implement the return statement, I decided to use @returns annotation with eax.
+         * So, my program will add a "@returns("eax")" annotation to the procedure if the procedure has
+         * the return statement.
+         * Then, in the procedure body, the program will add a line "mov(return_value, eax)" instruction
+         * to assign the value that should be returned to the "eax" register.
+         */
+        str += "    mov(";
+        str += *a2;
+        str += ", eax);\n";
 
     } else if (tac->hasAssign) { //check if the TAC contains the assignment
         str += "    mov(";
@@ -249,10 +286,12 @@ void writeHLA_Call(string *functionName, vector<string> &params, ofstream &hlaFi
  * The aim of this function is to write the HLA codes via file output stream.
  * @param {tacList} the instance that contains TAC instances
  * @param {hlaFile} the file output stream
+ * @param {name} The name of the current procedure
  */
-void writeHLA(TACList *tacList, ofstream &hlaFile) {
+void writeHLA(TACList *tacList, ofstream &hlaFile, string &name) {
     vector<TAC *> *list = tacList->getList();
     int size = list->size();
+    int lastIndex = size - 1;
 
     // use for loop to iterate TAC instances in the list
     for (int i = 0; i < size; i++) {
@@ -296,6 +335,17 @@ void writeHLA(TACList *tacList, ofstream &hlaFile) {
         if (str != NULL) {
             hlaFile << *str;
             delete str;
+
+            /*
+             * Check if the current tac contains the return statement.
+             * Then it will also check if this tac is not the last statement of the procedure.
+             * Since the procedure meets the "return" statement, the procedure should end up there.
+             * Thus, we need to add "exit procedure" instruction to the HLA file if the current return
+             * statement is not located at the end of the procedure.
+             */
+            if (tac->getA1()->compare("Return") == 0 && i != lastIndex) {
+                hlaFile << "    exit " << name << "\n";
+            }
         }
     }
 }
@@ -383,6 +433,27 @@ void generateVariableSection(SymbolTable *table, ofstream &hlaFile) {
 }
 
 /**
+ * Check if the current procedure has the return statement.
+ * And if so, add the "@returns("eax")" annotation to the HLA code
+ * @param {tacList} the list of TAC instances
+ * @param {hlaFile} file output stream
+ */
+void checkAndGenerateReturnAnnotation(TACList *tacList, ofstream &hlaFile) {
+    vector<TAC *> *list = tacList->getList();
+    int lastIndex = list->size() - 1;
+
+    // use for loop to iterate tac instances in the list
+    for (int i = 0; i <= lastIndex; i++) {
+        TAC *tac = list->at(i);
+        if (tac->getA1()->compare("Return") == 0) {
+            //add @returns("eax") annotation to let the HLA knows that this procedure returns some value.
+            hlaFile << " @returns( \"eax\" );";
+            break;
+        }
+    }
+}
+
+/**
  * Generates the HLA file by parsing the TACs.
  * @param {list} the list of TAC instances
  * @param {procedures} the list of procedures
@@ -433,20 +504,28 @@ void generateHLA(vector<TACList *> list, vector<Procedure *> *procedures, string
             hlaFile << ")";
         }
 
-        hlaFile << ";  @noframe\n";
+        //add @noframe annotation to prevent HLA inserting some additional codes that might make the program to fail to run as intended
+        hlaFile << ";  @noframe;";
+
+        checkAndGenerateReturnAnnotation(tacList, hlaFile); //add @returns annotation if required
+        hlaFile << "\n";
+
         hlaFile << "begin " << *(name) << ";\n\n";
-        writeHLA(tacList, hlaFile); // generate HLA for procedures
+        writeHLA(tacList, hlaFile, *name); // generate HLA for procedures
         hlaFile << "\nend " << *(name) << ";\n";
     }
 
-    hlaFile << "procedure main;  @noframe\n"; // start writing HLA codes for main function
+    hlaFile << "procedure main;  @noframe;"; // start writing HLA codes for main function
+
+    TACList *mainList = list.at(0); //get the TACList for main function
+    checkAndGenerateReturnAnnotation(mainList, hlaFile); //add @returns annotation if required
+    hlaFile << "\n";
+
     generateVariableSection(table, hlaFile); //generate HLA codes for var section
     hlaFile << "begin main;\n";
 
-    TACList *mainList = list.at(0); //get the TACList for main function
-
-    writeHLA(mainList, hlaFile); // generate HLA for main function
-
+    string name_mainFunction = "main";
+    writeHLA(mainList, hlaFile, name_mainFunction); // generate HLA for main function
     hlaFile << "\nend main;\n\nend " << *(programName) << ";\n";
 
     hlaFile.close(); //close the file stream
