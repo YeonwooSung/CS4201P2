@@ -1,12 +1,30 @@
 #include "ast.h"
 #include <iostream>
+#include <cstring>
 
 
-int main() {
+int main(int argc, char **argv) {
     SymbolTable *table = new SymbolTable();
-    Program *program = getExampleTree(table); //get the AST
-    //Program *program = getExampleTree_error1(table); //get the AST that has semantic error in it (variable scoping issue)
-    //Program *program = getExampleTree_error2(table); //get the AST that has type error (integer + boolean)
+    Program *program = NULL;
+
+    /*
+     * If there is not command line arguments, use general tree.
+     * If there is a command line argument, check the first argument.
+     * If it is 1, use getExampleTree_error1() function.
+     * Or if it is 2, use getExampleTree_error2() function.
+     * Otherwise, just use the general tree.
+     */
+    if (argc > 1) {
+        if (strcmp(argv[1], "1") == 0) {
+            program = getExampleTree_error1(table); //get the AST that has semantic error in it (variable scoping issue)
+        } else if (strcmp(argv[1], "2") == 0) {
+            program = getExampleTree_error2(table); //get the AST that has type error (integer + boolean)
+        } else {
+            program = getExampleTree(table); //get the AST
+        }
+    } else {
+        program = getExampleTree(table); //get the AST
+    }
 
     vector<Procedure *> *procedures = program->ps; //get the list of procedures
     vector<Stmt *> *stmts = program->cs->stmts;    //get the list of statements in the compound of the main function
@@ -19,7 +37,7 @@ int main() {
 
     // run the type checking
     if (!checkType(table, stmts, procedures)) {
-        std::cerr << "Error::Type checking failed - Type error found in the function \"main\"" << std::endl;
+        std::cerr << "Error::Type checking failed - Type error is found in the function \"main\"" << std::endl;
         return 0;
     }
 

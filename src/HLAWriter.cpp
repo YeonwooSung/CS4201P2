@@ -479,7 +479,7 @@ void generateHLA(vector<TACList *> list, vector<Procedure *> *procedures, string
     }
 
     ofstream hlaFile;
-    hlaFile.open("hla.txt"); //open the file output stream
+    hlaFile.open("test.hla"); //open the file output stream
 
     // write program name and include statement to the HLA file
     hlaFile << "program " << *(programName) << ";\nbegin " << *(programName) << ";\n\n#include( \"stdlib.hhf\" );\n\n";
