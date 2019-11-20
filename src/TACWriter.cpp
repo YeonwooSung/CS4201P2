@@ -13,6 +13,11 @@ bool startsWith(const string& s1, const string& s2) {
     return s2.length() <= s1.length() && equal(s2.begin(), s2.end(), s1.begin());
 }
 
+/**
+ * This function generates the Three Address Code string by parsing the given TAC instance.
+ * @param {tac} the TAC istance
+ * @return The three address code
+ */
 string *generateTACString(TAC *tac) {
     string str = "";
 
@@ -65,6 +70,12 @@ string *generateTACString(TAC *tac) {
     return new string(str);
 }
 
+/**
+ * This function writes the TAC codes via file output stream by parsing the TAC instances in the TACList.
+ * @param {tacList} The TACList instance.
+ * @param {tacFile} The file output stream
+ * @param {functionName} the name of the procedure
+ */
 void writeTAC(TACList *tacList, ofstream &tacFile, string functionName) {
     vector<TAC *> *list = tacList->getList();
     int size = list->size();
@@ -85,7 +96,7 @@ void writeTAC(TACList *tacList, ofstream &tacFile, string functionName) {
             continue;
         }
 
-        string *str = generateTACString(tac);
+        string *str = generateTACString(tac); //parse the TAC instance
 
         // check if the returned string is null
         if (str != NULL) {
@@ -95,6 +106,11 @@ void writeTAC(TACList *tacList, ofstream &tacFile, string functionName) {
     }
 }
 
+/**
+ * This function iterates the procedures in the list to write TAC codes for each procedure.
+ * @param {list} TACList instance
+ * @param {procedures} The list that contains the procedures.
+ */
 void writeTAC(vector<TACList *> list, vector<Procedure *> *procedures) {
     int size = list.size();
 
@@ -121,6 +137,8 @@ void writeTAC(vector<TACList *> list, vector<Procedure *> *procedures) {
         Procedure *p = procedures->at(i - 1);
         writeTAC(tacList, tacFile, *(p->name)); // call method to write three address codes for the procedure
     }
+
+    // write the TAC codes for the main procedure
 
     TACList *mainList = list.at(0);
     writeTAC(mainList, tacFile, "main"); // call method to write three address codes for the main function

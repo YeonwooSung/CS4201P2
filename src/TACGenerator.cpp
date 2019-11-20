@@ -11,6 +11,10 @@ void generateTAC(SymbolTable *table, vector<Stmt *> *stmts, TACList *list);
 bool processExpression(SymbolTable *table, Expression *expr, TACList *list, TAC *tac);
 
 
+/**
+ * Generates the section label for the branching.
+ * @return The generated label.
+ */
 string *generateSectionNum() {
     string name = SECTION_STR + std::to_string(sectionNum);
     sectionNum += 1;
@@ -73,6 +77,15 @@ string *generateFactorString(SymbolTable *table, Factor *f, TACList *list) {
     return NULL;
 }
 
+/**
+ * Generates the TAC for the given term.
+ * @param {table} the syntax table
+ * @param {t} the term
+ * @param {list} The TACList instance to store the generated TAC instances.
+ * @return If there is no error, returns the first address of the TAC, which is the temporal variable.
+ *         Otherwise, returns NULL.
+ *         So, by checking if the returned pointer value is NULL, we could detect the error.
+ */
 string *generateTAC_Term(SymbolTable *table, Term *t, TACList *list) {
     TAC *tac = new TAC();
     tac->setA1(generateVarName());
@@ -132,11 +145,20 @@ string *generateTAC_Term(SymbolTable *table, Term *t, TACList *list) {
     return tac->getA1();
 }
 
+/**
+ * Process the given simple expression to generate the suitable three address code.
+ * @param {table} the symbol table
+ * @param {s} the simple expression
+ * @param {tac} the TAC instance to store the generated three address code.
+ * @param {list} the TACList instance to store the generated TAC instances
+ * @return If the error occurs, returns true. Otherwise, returns false.
+ */
 bool processSimpleExpression(SymbolTable *table, Simple *s, TAC *tac, TACList *list) {
-    // check if the pointer is NULL to know which type of the union is used
+    // check if the pointer is NULL to know which member of the struct is used
     if (s->e1 != NULL) {
         Term *t = s->e1->t;
 
+        // check if the pointer is NULL to know which member of the struct is used
         if (t->t1 != NULL) {
             Factor *f = t->t1->f;
             string *s = generateFactorString(table, f, list);
@@ -151,6 +173,7 @@ bool processSimpleExpression(SymbolTable *table, Simple *s, TAC *tac, TACList *l
             Term2 *t2 = t->t2;
             MulOp mulop = *(t2->op);
 
+            // use the switch statement to check which operator is used.
             switch(mulop) {
                 case Mul:
                     tac->setOp(new string("*"));
@@ -165,7 +188,7 @@ bool processSimpleExpression(SymbolTable *table, Simple *s, TAC *tac, TACList *l
                     return true;
             }
 
-            string *s = generateFactorString(table, t2->f1, list);
+            string *s = generateFactorString(table, t2->f1, list); //generate the TAC for the first factor
             // check if returned string is NULL
             if (s != NULL) {
                 tac->setA2(s);
@@ -173,7 +196,7 @@ bool processSimpleExpression(SymbolTable *table, Simple *s, TAC *tac, TACList *l
                 return true;
             }
 
-            s = generateFactorString(table, t2->f2, list);
+            s = generateFactorString(table, t2->f2, list); //generate the TAC for the first factor
             // check if returned string is NULL
             if (s != NULL) {
                 tac->setA3(s);
@@ -189,6 +212,7 @@ bool processSimpleExpression(SymbolTable *table, Simple *s, TAC *tac, TACList *l
         Simple2 *s2 = s->e2;
         AddOp addop = *(s2->op);
 
+        // use the switch statement to check which operator is used.
         switch(addop) {
             case Or:
                 tac->setOp(new string("||"));
@@ -206,8 +230,8 @@ bool processSimpleExpression(SymbolTable *table, Simple *s, TAC *tac, TACList *l
 
         // parse the terms to set the value of 2nd and 3rd address of the three address code
 
-        tac->setA2(generateTAC_Term(table, s2->t1, list));
-        tac->setA3(generateTAC_Term(table, s2->t2, list));
+        tac->setA2(generateTAC_Term(table, s2->t1, list)); //generate the TAC for the first term
+        tac->setA3(generateTAC_Term(table, s2->t2, list)); //generate the TAC for the second term
 
     } else {
         return true;
@@ -216,6 +240,14 @@ bool processSimpleExpression(SymbolTable *table, Simple *s, TAC *tac, TACList *l
     return false;
 }
 
+/**
+ * Process the expression, and generate the suitable three address code.
+ * @param {table} the syntax table
+ * @param {expr} the expression
+ * @param {list} The TACList instance to store the generated TAC instances
+ * @param {tac} The TAC instance
+ * @return If the error occurs, returns true. Otherwise, returns false.
+ */
 bool processExpression(SymbolTable *table, Expression *expr, TACList *list, TAC *tac) {
     // check the type of expression
     if (expr->type != 's') {
@@ -233,7 +265,7 @@ bool processExpression(SymbolTable *table, Expression *expr, TACList *list, TAC 
         }
 
         TAC *tac2 = new TAC();
-        tac2->hasAssign = true;
+        tac2->hasAssign = true; //since this expression contains the assignment, set the hasAssign as true
 
         // Check if the Simple is valid. If not, free the assigned memory.
         if (processSimpleExpression(table, s2, tac2, list)) {
@@ -243,7 +275,7 @@ bool processExpression(SymbolTable *table, Expression *expr, TACList *list, TAC 
         }
 
         if (tac1->getA3() != NULL) {
-            string *str = generateVarName();
+            string *str = generateVarName(); //generate temporal variable
             tac1->setA1(new string(*(str))); //set the first address with the temp name
             tac->setA2(str);
             list->appendTAC(tac1); // append the TAC instaces to the list
@@ -254,18 +286,19 @@ bool processExpression(SymbolTable *table, Expression *expr, TACList *list, TAC 
         }
 
         if (tac2->getA3() != NULL) {
-            string *str = generateVarName();
+            string *str = generateVarName();   //generate temporal variable
             tac2->setA1(new string(*(str)));   //set the first address with the temp name
             tac->setA3(str);
             list->appendTAC(tac2); // append the TAC instaces to the list
         } else {
-            string *str = new string(*(tac2->getA2()));
+            string *str = new string(*(tac2->getA2())); //generate temporal variable
             tac->setA3(str);
             delete tac2; // free the allocated memory
         }
 
         RelOp relop = *(e->op);
 
+        // use switch statement to check which operator is used
         switch(relop) {
             case Eq:
                 tac->setOp(new string("=="));
@@ -292,8 +325,9 @@ bool processExpression(SymbolTable *table, Expression *expr, TACList *list, TAC 
         }
 
     } else {
-        Simple *s = expr->expr->e1;
+        Simple *s = expr->expr->e1; //get the simple expression from the expression
 
+        // call the processSimpleExpression() function to parse and generate the TAC for the simple expression s.
         if (processSimpleExpression(table, s, tac, list)) {
             return true;
         }
@@ -302,6 +336,12 @@ bool processExpression(SymbolTable *table, Expression *expr, TACList *list, TAC 
     return false;
 }
 
+/**
+ * This method generates the TAC instance by parsing the Assign statement.
+ * @param {table} the syntax table
+ * @param {a} the assign statement
+ * @param {list} the TACList instance to store all generated TAC instances.
+ */
 void generateTAC_Assign(SymbolTable *table, Assign *a, TACList *list) {
     TAC *tac = new TAC();
 
@@ -451,7 +491,7 @@ void generateTAC_Call(SymbolTable * table, Call *c, TACList* list) {
         if (processExpression(table, e, list, param)) {
             delete param;
         } else {
-            param->setA1(generateVarName());
+            param->setA1(generateVarName()); //generate the temporal variable name
             param->hasAssign = true;
 
             TAC *tac = new TAC();
@@ -483,11 +523,18 @@ void generateTAC_Call(SymbolTable * table, Call *c, TACList* list) {
     list->appendTAC(popParams);
 }
 
+/**
+ * Generate Three Address Code for the if statement.
+ * @param {table} symbol table
+ * @param {i} If statement
+ * @param {list} TACList instance
+ */
 void generateTAC_If(SymbolTable *table, If *i, TACList *list) {
     TAC *expression = new TAC();
-    expression->setA1(generateVarName());
+    expression->setA1(generateVarName()); //generate the temporal variable name
     expression->hasAssign = true;
 
+    // "If a2 Goto L0"
     TAC *tac = new TAC();
     tac->setA1(new string("If"));
     tac->setA2(new string(*(expression->getA1())));
@@ -496,6 +543,7 @@ void generateTAC_If(SymbolTable *table, If *i, TACList *list) {
     // check if the IfStmt union contains either If1 or If2
     if (i->type != '1') {
         If2 *if2 = i->i->if2;
+        // check if the expression is valid
         if (processExpression(table, if2->e, list, expression)) {
             delete expression;
             delete tac;
@@ -504,6 +552,7 @@ void generateTAC_If(SymbolTable *table, If *i, TACList *list) {
         } else {
             list->appendTAC(expression);
 
+            // generate temporal variable names
             string *str1 = generateSectionNum();
             string *str2 = generateSectionNum();
             string *str3 = generateSectionNum();
@@ -548,6 +597,8 @@ void generateTAC_If(SymbolTable *table, If *i, TACList *list) {
         }
     } else {
         If1 *if1 = i->i->if1;
+
+        // check if the expression of the if statement is valid
         if (processExpression(table, if1->e, list, expression)) {
             delete expression;
             delete tac;
@@ -615,7 +666,7 @@ void generateTAC_While(SymbolTable *table, While *w, TACList *list) {
         return;
     }
 
-    expression->setA1(generateVarName());
+    expression->setA1(generateVarName()); //generate the temporal variable name
     list->appendTAC(expression);
 
     // TAC object for "If t Goto L1"
