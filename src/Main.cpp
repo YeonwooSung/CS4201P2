@@ -8,16 +8,17 @@ int main() {
     //Program *program = getExampleTree_error1(table); //get the AST that has semantic error in it (variable scoping issue)
     //Program *program = getExampleTree_error2(table); //get the AST that has type error (integer + boolean)
 
+    vector<Procedure *> *procedures = program->ps; //get the list of procedures
+    vector<Stmt *> *stmts = program->cs->stmts;    //get the list of statements in the compound of the main function
+
     // run the semantic analysis
-    if (!checkScopeOfAllProcedures(table, program->ps) || !checkScopeOfStmts(table, program->cs->stmts, NULL, program->cs->startLine, program->cs->endLine)) {
+    if (!checkScopeOfAllProcedures(table, procedures) || !checkScopeOfStmts(table, stmts, NULL, program->cs->startLine, program->cs->endLine)) {
         std::cerr << "Error::Semantic analysis failed" << std::endl;
         return 0;
     }
 
-    vector<Procedure *> *procedures = program->ps;
-
     // run the type checking
-    if (!checkType(table, program->cs->stmts, procedures)) {
+    if (!checkType(table, stmts, procedures)) {
         std::cerr << "Error::Type checking failed - Type error found in the function \"main\"" << std::endl;
         return 0;
     }
@@ -64,7 +65,7 @@ int main() {
     vector<TACList *> list; //list that contains lists of ThreeAddressCode instances
 
     // generate three address codes for main method
-    TACList *tacList_mainFunction = generateTACList(table, program->cs->stmts);
+    TACList *tacList_mainFunction = generateTACList(table, stmts);
     TAC *endOfMainFunction = new TAC();
     endOfMainFunction->setA1(new string("EndFunc"));
     tacList_mainFunction->appendTAC(endOfMainFunction);
@@ -84,11 +85,8 @@ int main() {
         list.push_back(tacList);
     }
 
-    // write three address code file
-    writeTAC(list, procedures);
-
-    // generate HLA codes
-    generateHLA(list, procedures, program->name, table);
+    writeTAC(list, procedures); // write three address code file
+    generateHLA(list, procedures, program->name, table); // generate HLA codes
 
     delete table;
     std::cout << "Program ends" << std::endl;

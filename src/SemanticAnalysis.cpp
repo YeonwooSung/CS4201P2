@@ -6,6 +6,20 @@
 bool validateExpression(SymbolTable *table, Expression *e, int startLine, int endLine);
 
 
+/**
+ * Check the scope of the variable by comparing the declared line of the variable and the start line and end line.
+ * When this function checks the scope of the variable, it will first check if the given variable is a parameter of the current procedure.
+ * If not, it will check if the given variable is declared before by comparing the the declared line with the start line and end line
+ * of the current procedure (or compound).
+ * By doing this, we could detect the variable scoping error.
+ *
+ * @param {table} the symbol table
+ * @param {varName} the name of the variable that should be checked
+ * @param {params} the list of parameters of the procedure (the main procedure does not have parameters, so it will be NULL if it is in the main procedure)
+ * @param {startLine} the startLine of the procedure
+ * @param {endLine} the endLine of the current compound
+ * @return If there is no errror, returns true. Otherwise, returns false.
+ */
 bool checkScopeOfVarName(SymbolTable *table, std::string *varName, vector<Variable *> *params, int startLine, int endLine) {
     bool checker = false;
 
@@ -53,11 +67,23 @@ bool checkScopeOfVarName(SymbolTable *table, std::string *varName, vector<Variab
         }
     }
 
+    /*
+     * The value of the checker is true if the scope of the variable is valid.
+     * So, we negate the checker to check if there is variable scoping error.
+     */
     if (!checker) std::cerr << "ScopeError::The scope of the variable " << *varName << " is invalid!" << std::endl;
 
     return checker;
 }
 
+/**
+ * This function analyses the given factor to check the variable scoping error.
+ * @param {table} the symbol table
+ * @param {f} The factor that should be analysed
+ * @param {startLine} the startLine of the procedure
+ * @param {endLine} the endLine of the current compound
+ * @return If there is no error, returns true. Otherwise, returns false.
+ */
 bool validateFactor(SymbolTable *table, Factor *f, int startLine, int endLine) {
     bool b = false;
 
@@ -74,15 +100,27 @@ bool validateFactor(SymbolTable *table, Factor *f, int startLine, int endLine) {
     return b;
 }
 
+/**
+ * This function analyses the given term to check the variable scoping error.
+ * @param {table} the symbol table
+ * @param {t} The term that should be analysed
+ * @param {startLine} the startLine of the procedure
+ * @param {endLine} the endLine of the current compound
+ * @return If there is no error, returns true. Otherwise, returns false.
+ */
 bool validateTerm(SymbolTable *table, Term *t, int startLine, int endLine) {
     bool b = true;
 
+    // check which type is currently used.
     if (t->t1 != NULL) {
         Factor *factor = t->t1->f;
-        b = validateFactor(table, factor, startLine, endLine);
+        b = validateFactor(table, factor, startLine, endLine); //do the semantic analysis by checking the factor in the term
     } else if (t->t2 != NULL) {
         Factor *factor1 = t->t2->f1;
         Factor *factor2 = t->t2->f2;
+
+        //do the semantic analysis by checking the factors in the term
+
         b = validateFactor(table, factor1, startLine, endLine);
         b = b && validateFactor(table, factor2, startLine, endLine);
     } else {
@@ -92,6 +130,14 @@ bool validateTerm(SymbolTable *table, Term *t, int startLine, int endLine) {
     return b;
 }
 
+/**
+ * This function analyses the given simple expression to check the variable scoping error.
+ * @param {table} the symbol table
+ * @param {s} The simple expression that should be analysed
+ * @param {startLine} the startLine of the procedure
+ * @param {endLine} the endLine of the current compound
+ * @return If there is no error, returns true. Otherwise, returns false.
+ */
 bool validateSimple(SymbolTable *table, Simple *s, int startLine, int endLine) {
     bool b = true;
 
@@ -113,6 +159,14 @@ bool validateSimple(SymbolTable *table, Simple *s, int startLine, int endLine) {
     return b;
 }
 
+/**
+ * This function analyses the given expression to check the variable scoping error.
+ * @param {table} the symbol table
+ * @param {e} The expression that should be analysed
+ * @param {startLine} the startLine of the procedure
+ * @param {endLine} the endLine of the current compound
+ * @return If there is no error, returns true. Otherwise, returns false.
+ */
 bool validateExpression(SymbolTable *table, Expression *e, int startLine, int endLine) {
     char type = e->type;
     bool b = true;
@@ -129,11 +183,21 @@ bool validateExpression(SymbolTable *table, Expression *e, int startLine, int en
     return b;
 }
 
+/**
+ * This function performs the semantic analysis for the function call statement.
+ * @param {table} the symbol table
+ * @param {call} the function call statement
+ * @param {parameters} the list of parameters of the procedure (the main procedure does not have parameters, so it will be NULL if it is in the main procedure)
+ * @param {startLine} the startLine of the procedure
+ * @param {endLine} the endLine of the current compound
+ * @return If there is no error, returns true. Otherwise, returns false.
+ */
 bool checkScopeOfParamsForFunctionCall(SymbolTable *table, Call *call, vector<Variable *> *parameters, int startLine, int endLine) {
     if (parameters != NULL) {
         // add parameters to symbol table
         int numOfParams = parameters->size();
 
+        // use for loop to check all parameters
         for (int i = 0; i < numOfParams; i++) {
             VarInfo *info = new VarInfo;
             info->declaredLine = startLine;
@@ -164,6 +228,15 @@ bool checkScopeOfParamsForFunctionCall(SymbolTable *table, Call *call, vector<Va
     return result;
 }
 
+/**
+ * Parse the If statement to check the variable scoping errors, and validate the expression and statements in the if statement.
+ * @param {table} the symbol table
+ * @param {stmt} the If statement
+ * @param {params} the list of parameters of the procedure (the main procedure does not have parameters, so it will be NULL if it is in the main procedure)
+ * @param {startLine} the startLine of the procedure
+ * @param {endLine} the endLine of the current compound
+ * @return If there is no errror, returns true. Otherwise, returns false.
+ */
 bool doSemanticAnalysisForIfStatement(SymbolTable *table, If *stmt, vector<Variable *> *params, int startLine, int endLine) {
     bool checker = false;
 

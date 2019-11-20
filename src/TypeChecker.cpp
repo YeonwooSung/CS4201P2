@@ -5,6 +5,12 @@ char getType(SymbolTable *table, Expression *e);
 bool checkType(SymbolTable *table, Expression *expression);
 
 
+/**
+ * Gets the type of the given factor.
+ * @param {table} the symbol table
+ * @param {f} the factor
+ * @return 'i' for integer, 's' for string, 'b' for boolean, 0 for undefined, and -1 for error
+ */
 char getType(SymbolTable *table, Factor * f) {
     if (f->con != NULL) {
         string *con = f->con;
@@ -20,7 +26,7 @@ char getType(SymbolTable *table, Factor * f) {
                 it += 1;
             }
 
-            // use while loop to iterate the iterator
+            // use while loop to iterate the iterator, so that we could check if all characters in the given stirng are digits
             while (it != con->end() && std::isdigit(*it)) it += 1;
 
             if (!con->empty() && it == con->end()) {
@@ -40,6 +46,12 @@ char getType(SymbolTable *table, Factor * f) {
     }
 }
 
+/**
+ * Gets the type of the given term.
+ * @param {table} the symbol table
+ * @param {t} the term
+ * @return 'i' for integer, 's' for string, 'b' for boolean, 0 for undefined, and -1 for error
+ */
 char getType(SymbolTable *table, Term *t) {
     if (t == NULL) return -1;
 
@@ -53,6 +65,7 @@ char getType(SymbolTable *table, Term *t) {
         Factor *f1 = t2->f1;
         Factor *f2 = t2->f2;
 
+        // get the type of factor
         char type1 = getType(table, f1);
         char type2 = getType(table, f2);
 
@@ -71,14 +84,20 @@ char getType(SymbolTable *table, Term *t) {
 
             // check if the MulOp is And
             if (*mulop != And) {
-                return (type1 == 'i' ? 'i' : -1);
+                return (type1 == 'i' ? 'i' : -1); //check if the type of the term is integer - it should be integer type, since the arithmetic operator is used
             } else {
-                return (type1 == 'b' ? 'b' : -1);
+                return (type1 == 'b' ? 'b' : -1); //check if the type of the term is boolean - it should be boolean type, since the logical operator is used
             }
         }
     }
 }
 
+/**
+ * Gets the type of the given expression.
+ * @param {table} the symbol table
+ * @param {s} the simple expression
+ * @return 'i' for integer, 's' for string, 'b' for boolean, 0 for undefined, and -1 for error
+ */
 char getType(SymbolTable *table, Simple *s) {
     if (s == NULL) return -1;
 
@@ -94,6 +113,7 @@ char getType(SymbolTable *table, Simple *s) {
         Term *t1 = s->e2->t1;
         Term *t2 = s->e2->t2;
 
+        // get the type of term
         char type1 = getType(table, t1);
         char type2 = getType(table, t2);
 
@@ -113,14 +133,20 @@ char getType(SymbolTable *table, Simple *s) {
         } else {
             // check if the AddOp is Or
             if (*addop != Or) {
-                return (type1 == 'i' ? 'i' : -1);
+                return (type1 == 'i' ? 'i' : -1); //check if the given type is integer - it should be integer since the arithmetic operator is used
             } else {
-                return (type1 == 'b' ? 'b' : -1);
+                return (type1 == 'b' ? 'b' : -1); //check if the given type is boolean - it should be boolean since the logical operator is used
             }
         }
     }
 }
 
+/**
+ * Gets the type of the given expression.
+ * @param {table} the symbol table
+ * @param {e} the expression
+ * @return 'i' for integer, 's' for string, 'b' for boolean, 0 for undefined, and -1 for error
+ */
 char getType(SymbolTable *table, Expression *e) {
     if (e == NULL) return -1;
 
@@ -153,6 +179,12 @@ char getType(SymbolTable *table, Expression *e) {
     }
 }
 
+/**
+ * Check if there is type error in the given factor.
+ * @param {table} the symbol table
+ * @param {f} the factor that should be checked
+ * @return If there is no error, returns true. Otherwise, returns false.
+ */
 bool checkType(SymbolTable *table, Factor *f) {
     if (f->e != NULL) {
         return checkType(table, f->e);
@@ -160,9 +192,15 @@ bool checkType(SymbolTable *table, Factor *f) {
         return checkType(table, f->note);
     }
 
-    return true;
+    return true; //we do not need to compute the type checking for constant value, so just return true
 }
 
+/**
+ * Check if there is type error in the given term.
+ * @param {table} the symbol table
+ * @param {t} the term that should be checked
+ * @return If there is no error, returns true. Otherwise, returns false.
+ */
 bool checkType(SymbolTable *table, Term *t) {
     if (t == NULL) return false;
 
@@ -191,7 +229,7 @@ bool checkType(SymbolTable *table, Term *t) {
         }
 
         if (type2 == 0) {
-            if (type1 != -1) return true;
+            if (type1 != -1) return true; //check if the getType returned the error type (-1)
 
             return false;
         }
@@ -202,9 +240,9 @@ bool checkType(SymbolTable *table, Term *t) {
         } else {
             // check if the MulOp is And
             if (*mulop != And) {
-                checker = type1 == 'i';
+                checker = type1 == 'i'; //check if the type of the expression is an integer type.
             } else {
-                checker = type1 == 'b';
+                checker = type1 == 'b'; //check if the type of the expression is a boolean type
             }
         }
     }
@@ -212,11 +250,18 @@ bool checkType(SymbolTable *table, Term *t) {
     return checker;
 }
 
+/**
+ * Check if there is type error in the given expression.
+ * @param {table} the symbol table
+ * @param {s} the simple expression that should be checked
+ * @return If there is no error, returns true. Otherwise, returns false.
+ */
 bool checkType(SymbolTable *table, Simple *s) {
     if (s == NULL) return false;
 
     bool checker = true;
 
+    //check which type of the struct is used
     if (s->e1 != NULL) {
         checker = checkType(table, s->e1->t);
     } else {
@@ -228,6 +273,8 @@ bool checkType(SymbolTable *table, Simple *s) {
         // Since the given expression contains the AddOp, both factor1 and factor2 should be an integer.
         // Thus, this method will check the type of factors, and return suitable boolean value.
 
+
+        //call the getType() to get the type of the terms
         char type1 = getType(table, t1);
         char type2 = getType(table, t2);
 
@@ -236,19 +283,18 @@ bool checkType(SymbolTable *table, Simple *s) {
         }
 
         if (type1 == 0) {
-
             if (*addop != Or) {
-                return (type2 == 'i');
+                return (type2 == 'i'); //checks if the type is integer, since the operator is an arithmetic operator
             } else {
-                return (type2 == 'b');
+                return (type2 == 'b'); //checks if the type is integer, since the operator is a logical operator
             }
         }
 
         if (type2 == 0) {
             if (*addop != Or) {
-                return (type1 == 'i');
+                return (type1 == 'i'); //checks if the type is integer, since the operator is an arithmetic operator
             } else {
-                return (type1 == 'b');
+                return (type1 == 'b'); //checks if the type is integer, since the operator is a logical operator
             }
         }
 
@@ -267,6 +313,12 @@ bool checkType(SymbolTable *table, Simple *s) {
     return checker;
 }
 
+/**
+ * Check if there is type error in the given expression.
+ * @param {table} the symbol table
+ * @param {expression} the expression that should be checked
+ * @return If there is no error, returns true. Otherwise, returns false.
+ */
 bool checkType(SymbolTable *table, Expression *expression) {
     if (expression == NULL) return false;
 
@@ -302,6 +354,13 @@ bool checkType(SymbolTable *table, Expression *expression) {
     return checker;
 }
 
+/**
+ * Check if there is type error in the function call statement.
+ * @param {table} the symbol table
+ * @param {call} the function call statement
+ * @param {procedures} the list of procedures
+ * @return If there is no error, returns true. Otherwise, returns false.
+ */
 bool checkType_Call(SymbolTable *table, Call *call, vector<Procedure *> *procedures) {
     if (procedures == NULL) return false; // check if the pointer is null to avoid the null pointer exception
 
@@ -338,6 +397,13 @@ bool checkType_Call(SymbolTable *table, Call *call, vector<Procedure *> *procedu
     return true;
 }
 
+/**
+ * Check if there is type error in the given statement.
+ * @param {table} the symbol table
+ * @param {stmt} the statement
+ * @param {procedures} the list of procedures - this will be used for validating the function call statement
+ * @return If there is no error, returns true. Otherwise, returns false.
+ */
 bool checkType(SymbolTable *table, Stmt *stmt, vector<Procedure *> *procedures) {
     if (stmt == NULL) return false;
 
@@ -387,6 +453,13 @@ bool checkType(SymbolTable *table, Stmt *stmt, vector<Procedure *> *procedures) 
     return checker;
 }
 
+/**
+ * Check if there is type error in the given statements.
+ * @param {table} the symbol table
+ * @param {stmts} the list of statements
+ * @param {procedures} the list of procedures - this will be used for validating the function call statement
+ * @return If there is no error, returns true. Otherwise, returns false.
+ */
 bool checkType(SymbolTable *table, vector<Stmt *> *stmts, vector<Procedure *> *procedures) {
     if (stmts == NULL) return false;
 
