@@ -363,6 +363,7 @@ void writeParamsOfProcedure(vector<Variable *> *params, int size, ofstream &hlaF
         Variable *var = params->at(i);
         string str = "";
 
+        // check if it is whether Assign type or Id type.
         if (var->type != 'i') {
             str += *(var->v->a->i->i);
         } else {
